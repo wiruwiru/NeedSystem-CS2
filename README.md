@@ -19,15 +19,17 @@ Allows players to send a message to discord requesting players.
 | `MentionRoleID` | You must have the discord developer mode activated, right click on the role and copy its ID. |**YES** |
 | `MaxServerPlayers` | Maximum number of slots your server has. |**YES** |
 | `MinPlayers` | In this case if there are ten or more players connected the command cannot be used. | **YES** |
+| `CommandCooldownSeconds` | Command cooldown time in seconds. | **YES** |
 
 ## Configuration example
 ```
 {
-    WebhookUrl = "https://discord.com/api/webhooks/xxxxx/xxxxxxxxx,
-    IP = "45.235.99.18:27025",
-    MentionRoleID = "1111767358881681519",
-    MaxServerPlayers = 13,
-    MinPlayers = 10
+    "WebhookUrl": "https://discord.com/api/webhooks/xxxxx/xxxxxxxxx,
+    "IP": "45.235.99.18:27025",
+    "MentionRoleID": "1111767358881681519",
+    "MaxServerPlayers": 13,
+    "MinPlayers": 10,
+    "CommandCooldownSeconds": 120
 }
 ```
 
@@ -39,5 +41,4 @@ In the 'lang' folder, you'll find various files. For instance, 'es.json' is desi
 `css_need` `!need` - Send message
 
 ## TO-DO
-- Add parameter for command cooldown
 - Change configuration file location

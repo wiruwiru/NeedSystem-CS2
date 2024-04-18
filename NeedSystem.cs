@@ -16,13 +16,12 @@ namespace NeedSystem
     {
         private string _currentMap = "";
         private DateTime _lastCommandTime = DateTime.MinValue;
-        private const int CommandCooldownSeconds = 120; // dos minutos
 
         private Translator _translator;
 
         public override string ModuleAuthor => "luca.uy";
         public override string ModuleName => "NeedSystem";
-        public override string ModuleVersion => "v1.0.0";
+        public override string ModuleVersion => "v1.0.1";
 
         private Config _config = null!;
 
@@ -44,9 +43,10 @@ namespace NeedSystem
             {
                 if (controller == null) return;
 
-                if (!CheckCommandCooldown())
+                int secondsRemaining;
+                if (!CheckCommandCooldown(out secondsRemaining))
                 {
-                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", CommandCooldownSeconds]);
+                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", secondsRemaining]);
                     return;
                 }
 
@@ -66,9 +66,11 @@ namespace NeedSystem
             });
         }
 
-        private bool CheckCommandCooldown()
+        private bool CheckCommandCooldown(out int secondsRemaining)
         {
-            return (DateTime.Now - _lastCommandTime).TotalSeconds >= CommandCooldownSeconds;
+            var secondsSinceLastCommand = (int)(DateTime.Now - _lastCommandTime).TotalSeconds;
+            secondsRemaining = _config.CommandCooldownSeconds - secondsSinceLastCommand;
+            return secondsRemaining <= 0;
         }
 
         public int GetNumberOfPlayers()
@@ -177,7 +179,8 @@ namespace NeedSystem
                 IP = "45.235.99.18:27025", // Remplaza por la dirección IP de tu servidor.
                 MentionRoleID = "", // Debes tener activado el modo desarrollador de discord, click derecho en el rol y copias su ID.
                 MaxServerPlayers = 13, // La cantidad maxima de slots que tiene tu servidord.
-                MinPlayers = 10 // En este caso si hay diez o mas jugadores conectados el comando no se puede utilizar.
+                MinPlayers = 10, // En este caso si hay diez o mas jugadores conectados el comando no se puede utilizar.
+                CommandCooldownSeconds = 120 // Tiempo de enfriamiento del comando en segundos
             };
 
             File.WriteAllText(configPath,
@@ -219,5 +222,6 @@ namespace NeedSystem
         public string MentionRoleID { get; set; } = "";
         public int MaxServerPlayers { get; set; } = 13;
         public int MinPlayers { get; set; } = 10;
+        public int CommandCooldownSeconds { get; set; } = 120;
     }
 }
