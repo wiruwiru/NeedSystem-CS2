@@ -1,0 +1,15 @@
+﻿{
+  "Prefix": "[{GOLD}NEED{BLUE}SYSTEM{WHITE}]",
+  "CommandCooldownMessage": "{GOLD}Debes esperar {0} segundos antes de usar este comando nuevamente.",
+  "EnoughPlayersMessage": "Ya hay suficientes jugadores en el servidor.",
+  "NotifyPlayersMessage": "{RED}Has avisado a los demás jugadores que hay slot disponible para que ingresen.",
+  "EmbedTitle": "¡Se necesitan jugadores!",
+  "EmbedDescription": "Puedes conectarte haciendo clic en el link ubicado en Conexión",
+  "NeedInServerMessage": "te necesitan en el servidor!",
+  "ServerFieldTitle": "Servidor 🌍",
+  "RequestFieldTitle": "Solicitud de 👥",
+  "MapFieldTitle": "Mapa actual 🗺️",
+  "PlayersFieldTitle": "Conectados 🎮",
+  "ConnectionFieldTitle": "Conexión:",
+  "ClickToConnect": "[Click para unirte]"
+}
