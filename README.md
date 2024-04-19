@@ -3,7 +3,7 @@ Allows players to send a message to discord requesting players.
 ## Installation
 1. Install [CounterStrike Sharp](https://github.com/roflmuffin/CounterStrikeSharp) and [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master)
 
-2. Download NeedSystem.zip
+2. Download [NeedSystem.zip](https://github.com/wiruwiru/NeedSystem-CS2/releases) from the releases section.
 
 3. Unzip the archive and upload it to the game server
 
