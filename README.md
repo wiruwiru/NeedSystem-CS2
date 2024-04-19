@@ -15,7 +15,8 @@ Allows players to send a message to discord requesting players.
 | Parameter | Description | Required     |
 | :------- | :------- | :------- |
 | `WebhookUrl` | You must create it in the channel where you will send the notices. |**YES** |
-| `IP` | Replace with the IP address of your server. |**YES** |
+| `IPandPORT` | Replace with the IP address of your server. |**YES** |
+| `CustomDomain` | You can replace it with your domain if you want, the connect.php file is available in the main branch  |**YES** |
 | `MentionRoleID` | You must have the discord developer mode activated, right click on the role and copy its ID. |**YES** |
 | `MaxServerPlayers` | Maximum number of slots your server has. |**YES** |
 | `MinPlayers` | In this case if there are ten or more players connected the command cannot be used. | **YES** |
@@ -25,7 +26,8 @@ Allows players to send a message to discord requesting players.
 ```
 {
     "WebhookUrl": "https://discord.com/api/webhooks/xxxxx/xxxxxxxxx,
-    "IP": "45.235.99.18:27025",
+    "IPandPORT": "45.235.99.18:27025",
+    "CustomDomain": = "https://crisisgamer.com/redirect/connect.php",
     "MentionRoleID": "1111767358881681519",
     "MaxServerPlayers": 13,
     "MinPlayers": 10,
