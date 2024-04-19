@@ -21,7 +21,7 @@ namespace NeedSystem
 
         public override string ModuleAuthor => "luca.uy";
         public override string ModuleName => "NeedSystem";
-        public override string ModuleVersion => "v1.0.1";
+        public override string ModuleVersion => "v1.0.2";
 
         private Config _config = null!;
 
@@ -119,7 +119,7 @@ namespace NeedSystem
                     new
                     {
                         name = _translator["ConnectionFieldTitle"],
-                        value = $"[**`connect {GetIP()}`**](https://crisisgamer.com/redirect/retakecs2.php?ip={GetIP()})  {_translator["ClickToConnect"]}",
+                        value = $"[**`connect {GetIP()}`**]({GetCustomDomain()}?ip={GetIP()})  {_translator["ClickToConnect"]}",
                         inline = false
                     }
                 }
@@ -176,7 +176,8 @@ namespace NeedSystem
             var config = new Config
             {
                 WebhookUrl = "", // Debes crearlo en el canal donde enviaras los avisos.
-                IP = "45.235.99.18:27025", // Remplaza por la dirección IP de tu servidor.
+                IPandPORT = "45.235.99.18:27025", // Remplaza por la dirección IP de tu servidor.
+                CustomDomain = "https://crisisgamer.com/redirect/connect.php", // Si quieres usar tu propio dominio para rediregir las conexiones, debes remplazar esto.
                 MentionRoleID = "", // Debes tener activado el modo desarrollador de discord, click derecho en el rol y copias su ID.
                 MaxServerPlayers = 13, // La cantidad maxima de slots que tiene tu servidord.
                 MinPlayers = 10, // En este caso si hay diez o mas jugadores conectados el comando no se puede utilizar.
@@ -187,7 +188,7 @@ namespace NeedSystem
                 JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
 
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine("[NeedSystem] La configuración se ha guardado correctamente en el archivo: " + configPath);
+            Console.WriteLine("[NeedSystem] The configuration was successfully saved to a file: " + configPath);
             Console.ResetColor();
 
             return config;
@@ -197,9 +198,13 @@ namespace NeedSystem
         {
             return _config.WebhookUrl;
         }
+        private string GetCustomDomain()
+        {
+            return _config.CustomDomain;
+        }
         private string GetIP()
         {
-            return _config.IP;
+            return _config.IPandPORT;
         }
         private string MentionRoleID()
         {
@@ -218,7 +223,8 @@ namespace NeedSystem
     public class Config
     {
         public string WebhookUrl { get; set; } = "";
-        public string IP { get; set; } = "";
+        public string IPandPORT { get; set; } = "";
+        public string CustomDomain { get; set; } = "https://crisisgamer.com/redirect/connect.php";
         public string MentionRoleID { get; set; } = "";
         public int MaxServerPlayers { get; set; } = 13;
         public int MinPlayers { get; set; } = 10;
