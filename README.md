@@ -42,3 +42,6 @@ In the 'lang' folder, you'll find various files. For instance, 'es.json' is desi
 
 ## TO-DO
 - Change configuration file location
+
+###
+This project was created using as a basis the code from [ReportSystem](https://github.com/PhantomYopta/-Discord-cs2-ReportSystem)
