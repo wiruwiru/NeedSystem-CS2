@@ -22,7 +22,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
     - name: Restore
       run: dotnet restore
     - name: Build
@@ -38,7 +38,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
     - name: Restore
       run: dotnet restore
     - name: Build
@@ -46,9 +46,14 @@ jobs:
     - name: Zip
       run: |
         cd ${{ env.OUTPUT_PATH }}
-        if [ -d "../lang" ]; then
-          zip -r ../${{ env.PROJECT_NAME }}.zip .
-          zip -ur ../${{ env.PROJECT_NAME }}.zip ../lang
+        # Crear el zip con los archivos de la compilación
+        zip -r ../${{ env.PROJECT_NAME }}.zip .
+        
+        # Regresar a la raíz del proyecto para incluir la carpeta 'lang'
+        cd ..
+        if [ -d "./lang" ]; then
+          # Agregar la carpeta 'lang' al zip
+          zip -ur ./${{ env.PROJECT_NAME }}.zip ./lang
         else
           echo "The 'lang' directory does not exist."
           exit 1

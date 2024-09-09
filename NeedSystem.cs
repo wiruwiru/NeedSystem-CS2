@@ -21,7 +21,7 @@ namespace NeedSystem
 
         public override string ModuleAuthor => "luca.uy";
         public override string ModuleName => "NeedSystem";
-        public override string ModuleVersion => "v1.0.2";
+        public override string ModuleVersion => "v1.0.3";
 
         private Config _config = null!;
 
