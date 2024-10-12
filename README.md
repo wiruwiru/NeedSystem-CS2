@@ -24,6 +24,7 @@ https://github.com/user-attachments/assets/aeb2c6f5-f64b-435a-a8a3-43c77d917080
 | `MaxServerPlayers` | Maximum number of slots your server has. |**YES** |
 | `MinPlayers` | In this case if there are ten or more players connected the command cannot be used. | **YES** |
 | `CommandCooldownSeconds` | Command cooldown time in seconds. | **YES** |
+| `Command` | You can change the command to be used by the players or add extra commands. | **YES** |
 
 ## Configuration example
 ```
@@ -34,7 +35,8 @@ https://github.com/user-attachments/assets/aeb2c6f5-f64b-435a-a8a3-43c77d917080
     "MentionRoleID": "1111767358881681519",
     "MaxServerPlayers": 13,
     "MinPlayers": 10,
-    "CommandCooldownSeconds": 120
+    "CommandCooldownSeconds": 120,
+    "Command": [ "css_need", "css_needplayers" ]
 }
 ```
 
@@ -42,8 +44,9 @@ https://github.com/user-attachments/assets/aeb2c6f5-f64b-435a-a8a3-43c77d917080
 
 In the 'lang' folder, you'll find various files. For instance, 'es.json' is designated for the Spanish language. You're welcome to modify this file to better suit your style and language preferences. The language utilized depends on your settings in 'core.json' of CounterStrikeSharp.
 
-# Commands
+# Default commands
 `css_need` `!need` - Send message
+`css_needplayers` `!needplayers` - Send message
 
 ## TO-DO
 - Change configuration file location

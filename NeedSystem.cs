@@ -1,13 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Commands;
 using Microsoft.Extensions.Localization;
 
 namespace NeedSystem
@@ -16,12 +10,13 @@ namespace NeedSystem
     {
         private string _currentMap = "";
         private DateTime _lastCommandTime = DateTime.MinValue;
+        private Dictionary<string, DateTime> _playerLastCommandTimes = new();
 
         private Translator _translator;
 
         public override string ModuleAuthor => "luca.uy";
         public override string ModuleName => "NeedSystem";
-        public override string ModuleVersion => "v1.0.3";
+        public override string ModuleVersion => "v1.0.4";
 
         private Config _config = null!;
 
@@ -39,31 +34,34 @@ namespace NeedSystem
                 _currentMap = mapName;
             });
 
-            AddCommand("css_need", "", (controller, info) =>
+            foreach (var command in _config.Command)
             {
-                if (controller == null) return;
-
-                int secondsRemaining;
-                if (!CheckCommandCooldown(out secondsRemaining))
+                AddCommand(command, "", (controller, info) =>
                 {
-                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", secondsRemaining]);
-                    return;
-                }
+                    if (controller == null) return;
 
-                int numberOfPlayers = GetNumberOfPlayers();
+                    int secondsRemaining;
+                    if (!CheckCommandCooldown(out secondsRemaining))
+                    {
+                        controller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", secondsRemaining]);
+                        return;
+                    }
 
-                if (numberOfPlayers >= MinPlayers())
-                {
-                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["EnoughPlayersMessage"]);
-                    return;
-                }
+                    int numberOfPlayers = GetNumberOfPlayers();
 
-                NeedCommand(controller, controller?.PlayerName ?? "Desconocido");
+                    if (numberOfPlayers >= MinPlayers())
+                    {
+                        controller.PrintToChat(_translator["Prefix"] + " " + _translator["EnoughPlayersMessage"]);
+                        return;
+                    }
 
-                _lastCommandTime = DateTime.Now;
+                    NeedCommand(controller, controller?.PlayerName ?? _translator["UnknownPlayer"]);
 
-                controller.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
-            });
+                    _lastCommandTime = DateTime.Now;
+
+                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
+                });
+            }
         }
 
         private bool CheckCommandCooldown(out int secondsRemaining)
@@ -76,7 +74,7 @@ namespace NeedSystem
         public int GetNumberOfPlayers()
         {
             var players = Utilities.GetPlayers();
-            return players.Count();
+            return players.Count(p => !p.IsBot && !p.IsHLTV);
         }
 
         public void NeedCommand(CCSPlayerController? caller, string clientName)
@@ -175,13 +173,14 @@ namespace NeedSystem
         {
             var config = new Config
             {
-                WebhookUrl = "", // Debes crearlo en el canal donde enviaras los avisos.
-                IPandPORT = "45.235.99.18:27025", // Remplaza por la dirección IP de tu servidor.
-                CustomDomain = "https://crisisgamer.com/redirect/connect.php", // Si quieres usar tu propio dominio para rediregir las conexiones, debes remplazar esto.
-                MentionRoleID = "", // Debes tener activado el modo desarrollador de discord, click derecho en el rol y copias su ID.
-                MaxServerPlayers = 13, // La cantidad maxima de slots que tiene tu servidord.
-                MinPlayers = 10, // En este caso si hay diez o mas jugadores conectados el comando no se puede utilizar.
-                CommandCooldownSeconds = 120 // Tiempo de enfriamiento del comando en segundos
+                WebhookUrl = "",
+                IPandPORT = "45.235.99.18:27025",
+                CustomDomain = "https://crisisgamer.com/redirect/connect.php",
+                MentionRoleID = "",
+                MaxServerPlayers = 13,
+                MinPlayers = 10,
+                CommandCooldownSeconds = 120,
+                Command = new List<string> { "css_need", "css_needplayers" }
             };
 
             File.WriteAllText(configPath,
@@ -229,5 +228,6 @@ namespace NeedSystem
         public int MaxServerPlayers { get; set; } = 13;
         public int MinPlayers { get; set; } = 10;
         public int CommandCooldownSeconds { get; set; } = 120;
+        public List<string> Command { get; set; } = new List<string> { "css_need" };
     }
 }
