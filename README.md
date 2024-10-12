@@ -1,7 +1,7 @@
 # NeedSystem CS2
 Allows players to send a message to discord requesting players.
 
-https://github.com/user-attachments/assets/aeb2c6f5-f64b-435a-a8a3-43c77d917080
+https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
 
 ## Installation
 1. Install [CounterStrike Sharp](https://github.com/roflmuffin/CounterStrikeSharp) and [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master)
@@ -45,8 +45,7 @@ https://github.com/user-attachments/assets/aeb2c6f5-f64b-435a-a8a3-43c77d917080
 In the 'lang' folder, you'll find various files. For instance, 'es.json' is designated for the Spanish language. You're welcome to modify this file to better suit your style and language preferences. The language utilized depends on your settings in 'core.json' of CounterStrikeSharp.
 
 # Default commands
-`css_need` `!need` - Send message
-`css_needplayers` `!needplayers` - Send message
+`css_need` `css_needplayers` `!need` `!needplayers` - Send message
 
 ## TO-DO
 - Change configuration file location
