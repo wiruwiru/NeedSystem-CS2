@@ -31,7 +31,7 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
 {
     "WebhookUrl": "https://discord.com/api/webhooks/xxxxx/xxxxxxxxx,
     "IPandPORT": "45.235.99.18:27025",
-    "CustomDomain": = "https://crisisgamer.com/redirect/connect.php",
+    "CustomDomain": "https://crisisgamer.com/redirect/connect.php",
     "MentionRoleID": "1111767358881681519",
     "MaxServerPlayers": 13,
     "MinPlayers": 10,
