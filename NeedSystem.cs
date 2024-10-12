@@ -138,7 +138,7 @@ namespace NeedSystem
 
                 var payload = new
                 {
-                    content = $"¡<@&{MentionRoleID()}> {_translator["NeedInServerMessage"]}!",
+                    content = $"<@&{MentionRoleID()}> {_translator["NeedInServerMessage"]}",
                     embeds = new[] { embed }
                 };
 
