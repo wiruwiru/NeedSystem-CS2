@@ -9,7 +9,7 @@ on:
 env:
   BUILD_NUMBER: ${{ github.run_number }}
   PROJECT_PATH: "NeedSystem.csproj"
-  PROJECT_NAME: "NeedSystem-CS2"
+  PROJECT_NAME: "NeedSystem"
   OUTPUT_PATH: "./NeedSystem"
 
 jobs:
