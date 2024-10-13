@@ -2,232 +2,221 @@
 using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Localization;
 
-namespace NeedSystem
+namespace NeedSystem;
+
+public class BaseConfigs : BasePluginConfig
 {
-    public class NeedSystem : BasePlugin
+    [JsonPropertyName("WebhookUrl")]
+    public string WebhookUrl { get; set; } = "";
+
+    [JsonPropertyName("IPandPORT")]
+    public string IPandPORT { get; set; } = "45.235.99.18:27025";
+
+    [JsonPropertyName("CustomDomain")]
+    public string CustomDomain { get; set; } = "https://crisisgamer.com/redirect/connect.php";
+
+    [JsonPropertyName("MentionRoleID")]
+    public string MentionRoleID { get; set; } = "";
+
+    [JsonPropertyName("MaxServerPlayers")]
+    public int MaxServerPlayers { get; set; } = 13;
+
+    [JsonPropertyName("MinPlayers")]
+    public int MinPlayers { get; set; } = 10;
+
+    [JsonPropertyName("CommandCooldownSeconds")]
+    public int CommandCooldownSeconds { get; set; } = 120;
+
+    [JsonPropertyName("Command")]
+    public List<string> Command { get; set; } = new List<string> { "css_need", "css_needplayers" };
+}
+
+public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
+{
+    private string _currentMap = "";
+    private DateTime _lastCommandTime = DateTime.MinValue;
+    private Translator _translator;
+
+    public override string ModuleName => "NeedSystem";
+    public override string ModuleVersion => "1.0.5";
+    public override string ModuleAuthor => "luca.uy";
+    public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
+
+    public NeedSystemBase(IStringLocalizer localizer)
     {
-        private string _currentMap = "";
-        private DateTime _lastCommandTime = DateTime.MinValue;
-        private Dictionary<string, DateTime> _playerLastCommandTimes = new();
+        _translator = new Translator(localizer);
+    }
 
-        private Translator _translator;
+    public CounterStrikeSharp.API.Modules.Timers.Timer? intervalMessages;
 
-        public override string ModuleAuthor => "luca.uy";
-        public override string ModuleName => "NeedSystem";
-        public override string ModuleVersion => "v1.0.4";
-
-        private Config _config = null!;
-
-        public NeedSystem(IStringLocalizer localizer)
+    public override void Load(bool hotReload)
+    {
+        RegisterListener<Listeners.OnMapStart>(mapName =>
         {
-            _translator = new Translator(localizer);
-        }
+            _currentMap = mapName;
+        });
 
-        public override void Load(bool hotReload)
+        foreach (var command in Config.Command)
         {
-            _config = LoadConfig();
-
-            RegisterListener<Listeners.OnMapStart>(mapName =>
+            AddCommand(command, "", (controller, info) =>
             {
-                _currentMap = mapName;
-            });
+                if (controller == null) return;
 
-            foreach (var command in _config.Command)
-            {
-                AddCommand(command, "", (controller, info) =>
+                int secondsRemaining;
+                if (!CheckCommandCooldown(out secondsRemaining))
                 {
-                    if (controller == null) return;
-
-                    int secondsRemaining;
-                    if (!CheckCommandCooldown(out secondsRemaining))
-                    {
-                        controller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", secondsRemaining]);
-                        return;
-                    }
-
-                    int numberOfPlayers = GetNumberOfPlayers();
-
-                    if (numberOfPlayers >= MinPlayers())
-                    {
-                        controller.PrintToChat(_translator["Prefix"] + " " + _translator["EnoughPlayersMessage"]);
-                        return;
-                    }
-
-                    NeedCommand(controller, controller?.PlayerName ?? _translator["UnknownPlayer"]);
-
-                    _lastCommandTime = DateTime.Now;
-
-                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
-                });
-            }
-        }
-
-        private bool CheckCommandCooldown(out int secondsRemaining)
-        {
-            var secondsSinceLastCommand = (int)(DateTime.Now - _lastCommandTime).TotalSeconds;
-            secondsRemaining = _config.CommandCooldownSeconds - secondsSinceLastCommand;
-            return secondsRemaining <= 0;
-        }
-
-        public int GetNumberOfPlayers()
-        {
-            var players = Utilities.GetPlayers();
-            return players.Count(p => !p.IsBot && !p.IsHLTV);
-        }
-
-        public void NeedCommand(CCSPlayerController? caller, string clientName)
-        {
-            if (caller == null) return;
-
-            clientName = clientName.Replace("[Ready]", "").Replace("[Not Ready]", "").Trim();
-
-            var embed = new
-            {
-                title = _translator["EmbedTitle"],
-                description = _translator["EmbedDescription"],
-                color = 9246975,
-                fields = new[]
-                {
-                    new
-                    {
-                        name = _translator["ServerFieldTitle"],
-                        value = $"```{GetIP()}```",
-                        inline = false
-                    },
-                    new
-                    {
-                        name = _translator["RequestFieldTitle"],
-                        value = $"``` {clientName} ```",
-                        inline = false
-                    },
-                    new
-                    {
-                        name = _translator["MapFieldTitle"],
-                        value = $"```{_currentMap}```",
-                        inline = false
-                    },
-                    new
-                    {
-                        name = _translator["PlayersFieldTitle"],
-                        value = $"```{GetNumberOfPlayers()}/{MaxServerPlayers()}```",
-                        inline = false
-                    },
-                    new
-                    {
-                        name = _translator["ConnectionFieldTitle"],
-                        value = $"[**`connect {GetIP()}`**]({GetCustomDomain()}?ip={GetIP()})  {_translator["ClickToConnect"]}",
-                        inline = false
-                    }
+                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", secondsRemaining]);
+                    return;
                 }
-            };
 
-            Task.Run(() => SendEmbedToDiscord(embed));
-        }
+                int numberOfPlayers = GetNumberOfPlayers();
 
-        private async Task SendEmbedToDiscord(object embed)
-        {
-            try
-            {
-                var webhookUrl = GetWebhook();
-
-                if (string.IsNullOrEmpty(webhookUrl)) return;
-
-                var httpClient = new HttpClient();
-
-                var payload = new
+                if (numberOfPlayers >= MinPlayers())
                 {
-                    content = $"<@&{MentionRoleID()}> {_translator["NeedInServerMessage"]}",
-                    embeds = new[] { embed }
-                };
+                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["EnoughPlayersMessage"]);
+                    return;
+                }
 
-                var json = JsonSerializer.Serialize(payload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                var response = await httpClient.PostAsync(webhookUrl, content);
+                NeedCommand(controller, controller?.PlayerName ?? _translator["UnknownPlayer"]);
 
-                Console.ForegroundColor = response.IsSuccessStatusCode ? ConsoleColor.Green : ConsoleColor.Red;
-                Console.WriteLine(response.IsSuccessStatusCode
-                    ? "Success"
-                    : $"Error: {response.StatusCode}");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-        }
+                _lastCommandTime = DateTime.Now;
 
-        private Config LoadConfig()
-        {
-            var configPath = Path.Combine(ModuleDirectory, "config.json");
-
-            if (!File.Exists(configPath)) return CreateConfig(configPath);
-
-            var config = JsonSerializer.Deserialize<Config>(File.ReadAllText(configPath))!;
-
-            return config;
-        }
-
-        private Config CreateConfig(string configPath)
-        {
-            var config = new Config
-            {
-                WebhookUrl = "",
-                IPandPORT = "45.235.99.18:27025",
-                CustomDomain = "https://crisisgamer.com/redirect/connect.php",
-                MentionRoleID = "",
-                MaxServerPlayers = 13,
-                MinPlayers = 10,
-                CommandCooldownSeconds = 120,
-                Command = new List<string> { "css_need", "css_needplayers" }
-            };
-
-            File.WriteAllText(configPath,
-                JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
-
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine("[NeedSystem] The configuration was successfully saved to a file: " + configPath);
-            Console.ResetColor();
-
-            return config;
-        }
-
-        private string GetWebhook()
-        {
-            return _config.WebhookUrl;
-        }
-        private string GetCustomDomain()
-        {
-            return _config.CustomDomain;
-        }
-        private string GetIP()
-        {
-            return _config.IPandPORT;
-        }
-        private string MentionRoleID()
-        {
-            return _config.MentionRoleID;
-        }
-        private int MaxServerPlayers()
-        {
-            return _config.MaxServerPlayers;
-        }
-        private int MinPlayers()
-        {
-            return _config.MinPlayers;
+                controller.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
+            });
         }
     }
 
-    public class Config
+    public required BaseConfigs Config { get; set; }
+
+    public void OnConfigParsed(BaseConfigs config)
     {
-        public string WebhookUrl { get; set; } = "";
-        public string IPandPORT { get; set; } = "";
-        public string CustomDomain { get; set; } = "https://crisisgamer.com/redirect/connect.php";
-        public string MentionRoleID { get; set; } = "";
-        public int MaxServerPlayers { get; set; } = 13;
-        public int MinPlayers { get; set; } = 10;
-        public int CommandCooldownSeconds { get; set; } = 120;
-        public List<string> Command { get; set; } = new List<string> { "css_need" };
+        Config = config;
+    }
+
+    private bool CheckCommandCooldown(out int secondsRemaining)
+    {
+        var secondsSinceLastCommand = (int)(DateTime.Now - _lastCommandTime).TotalSeconds;
+        secondsRemaining = Config.CommandCooldownSeconds - secondsSinceLastCommand;
+        return secondsRemaining <= 0;
+    }
+
+    public int GetNumberOfPlayers()
+    {
+        var players = Utilities.GetPlayers();
+        return players.Count(p => !p.IsBot && !p.IsHLTV);
+    }
+
+    public void NeedCommand(CCSPlayerController? caller, string clientName)
+    {
+        if (caller == null) return;
+
+        clientName = clientName.Replace("[Ready]", "").Replace("[Not Ready]", "").Trim();
+
+        var embed = new
+        {
+            title = _translator["EmbedTitle"],
+            description = _translator["EmbedDescription"],
+            color = 9246975,
+            fields = new[]
+            {
+                new
+                {
+                    name = _translator["ServerFieldTitle"],
+                    value = $"```{GetIP()}```",
+                    inline = false
+                },
+                new
+                {
+                    name = _translator["RequestFieldTitle"],
+                    value = $"``` {clientName} ```",
+                    inline = false
+                },
+                new
+                {
+                    name = _translator["MapFieldTitle"],
+                    value = $"```{_currentMap}```",
+                    inline = false
+                },
+                new
+                {
+                    name = _translator["PlayersFieldTitle"],
+                    value = $"```{GetNumberOfPlayers()}/{MaxServerPlayers()}```",
+                    inline = false
+                },
+                new
+                {
+                    name = _translator["ConnectionFieldTitle"],
+                    value = $"[**`connect {GetIP()}`**]({GetCustomDomain()}?ip={GetIP()})  {_translator["ClickToConnect"]}",
+                    inline = false
+                }
+            }
+        };
+
+        Task.Run(() => SendEmbedToDiscord(embed));
+    }
+
+    private async Task SendEmbedToDiscord(object embed)
+    {
+        try
+        {
+            var webhookUrl = GetWebhook();
+
+            if (string.IsNullOrEmpty(webhookUrl))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Webhook URL is null or empty, skipping Discord notification.");
+                return;
+            }
+
+            var httpClient = new HttpClient();
+
+            var payload = new
+            {
+                content = $"<@&{MentionRoleID()}> {_translator["NeedInServerMessage"]}",
+                embeds = new[] { embed }
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync(webhookUrl, content);
+
+            Console.ForegroundColor = response.IsSuccessStatusCode ? ConsoleColor.Green : ConsoleColor.Red;
+            Console.WriteLine(response.IsSuccessStatusCode
+                ? "Success"
+                : $"Error: {response.StatusCode}");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+    private string GetWebhook()
+    {
+        return Config.WebhookUrl;
+    }
+    private string GetCustomDomain()
+    {
+        return Config.CustomDomain;
+    }
+    private string GetIP()
+    {
+        return Config.IPandPORT;
+    }
+    private string MentionRoleID()
+    {
+        return Config.MentionRoleID;
+    }
+    private int MaxServerPlayers()
+    {
+        return Config.MaxServerPlayers;
+    }
+    private int MinPlayers()
+    {
+        return Config.MinPlayers;
     }
 }

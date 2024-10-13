@@ -48,7 +48,5 @@ In the 'lang' folder, you'll find various files. For instance, 'es.json' is desi
 `css_need` `css_needplayers` `!need` `!needplayers` - Send message
 
 ## TO-DO
-- Change configuration file location
-
-###
-This project was created using as a basis the code from [ReportSystem](https://github.com/PhantomYopta/-Discord-cs2-ReportSystem)
+- [x] Change configuration file location
+- Currently there are no pending tasks for this plugin, but I do not rule out making improvements if they are needed or requested.
