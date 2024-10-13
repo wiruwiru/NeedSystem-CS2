@@ -44,6 +44,12 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
 
 In the 'lang' folder, you'll find various files. For instance, 'es.json' is designated for the Spanish language. You're welcome to modify this file to better suit your style and language preferences. The language utilized depends on your settings in 'core.json' of CounterStrikeSharp.
 
+# Custom domain configuration
+
+To configure CustomDomain you must first upload the “connect.php” file to your web hosting, after you have done this step you must place the url of this file in the configuration file. It should look like this `https://domain.com/redirect/connect.php` (EXAMPLE URL). In case you don't have a web hosting you can leave the default url.
+You can download the **`connect.php`** file directly from here: [Download connect.php](https://raw.githubusercontent.com/wiruwiru/NeedSystem-CS2/main/connect.php). 
+> **Note:** Right-click the link and select "Save link as..." to download the file directly.
+
 # Default commands
 `css_need` `css_needplayers` `!need` `!needplayers` - Send message
 
