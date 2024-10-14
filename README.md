@@ -20,13 +20,14 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
 | `WebhookUrl` | You must create it in the channel where you will send the notices. |**YES** |
 | `IPandPORT` | Replace with the IP address of your server. |**YES** |
 | `CustomDomain` | You can replace it with your domain if you want, the connect.php file is available in the main branch  |**YES** |
-| `MentionRoleID` | You must have the discord developer mode activated, right click on the role and copy its ID. |**YES** |
+| `MentionRoleID` | You must have the discord developer mode activated, right click on the role and copy its ID. |**NO** |
 | `MaxServerPlayers` | Maximum number of slots your server has. |**YES** |
 | `MinPlayers` | In this case if there are ten or more players connected the command cannot be used. | **YES** |
 | `CommandCooldownSeconds` | Command cooldown time in seconds. | **YES** |
 | `Command` | You can change the command to be used by the players or add extra commands. | **YES** |
 | `EmbedImage` | Enables or disables the map image to be shown in the Embed. | **YES** |
 | `ImagesURL` | Url from where the map images are taken, recommended to use your own url if you use workshop maps. | **YES** |
+| `PlayerNameList` | Displays a list of the names and profiles of the users who are logged in at the time the command is sent. | **YES** |
 
 ## Configuration example
 ```
@@ -40,7 +41,8 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
     "CommandCooldownSeconds": 120,
     "Command": [ "css_need", "css_needplayers" ],
     "EmbedImage": true,
-    "ImagesURL": "https://imagenes.redage.es/CS2/{map}.png"
+    "ImagesURL": "https://imagenes.redage.es/CS2/{map}.png",
+    "PlayerNameList": true
 }
 ```
 
@@ -59,4 +61,5 @@ You can download the **`connect.php`** file directly from here: [Download connec
 
 ## TO-DO
 - [x] Change configuration file location
-- Currently there are no pending tasks for this plugin, but I do not rule out making improvements if they are needed or requested.
+- [ ] Add a button below the embed for “Direct connection” with the possibility to activate and deactivate it.
+- Any improvement you propose to me that you feel would be a good option

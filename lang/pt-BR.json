@@ -12,5 +12,8 @@
   "PlayersFieldTitle": "Jogadores Conectados 🎮",
   "ConnectionFieldTitle": "Conexão:",
   "ClickToConnect": "[Clique para se juntar]",
-  "UnknownPlayer": "Desconhecido"
+  "UnknownPlayer": "Desconhecido",
+  "ProfileLink": "Perfil",
+  "NoPlayersConnectedMessage": "Nenhum jogador ligado",
+  "PlayerListTitle": "Lista de jogadores"
 }

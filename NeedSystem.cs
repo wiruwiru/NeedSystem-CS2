@@ -38,6 +38,9 @@ public class BaseConfigs : BasePluginConfig
 
     [JsonPropertyName("ImagesURL")]
     public string ImagesURL { get; set; } = "https://imagenes.redage.es/CS2/{map}.png";
+
+    [JsonPropertyName("PlayerNameList")]
+    public bool PlayerNameList { get; set; } = true;
 }
 
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
@@ -47,7 +50,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.0.6";
+    public override string ModuleVersion => "1.0.7";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -123,44 +126,79 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
         string imageUrl = Config.ImagesURL.Replace("{map}", _currentMap);
 
+        string playerList = string.Empty;
+        if (Config.PlayerNameList)
+        {
+            var players = Utilities.GetPlayers()
+                .Where(p => !p.IsBot && !p.IsHLTV && p.Connected == PlayerConnectedState.PlayerConnected)
+                .Select(p => new { p.PlayerName, p.SteamID })
+                .ToList();
+
+            if (players.Any())
+            {
+                var playerDetails = players
+                    .Select(p => $"{p.PlayerName} [[{_translator["ProfileLink"]}]](https://steamcommunity.com/profiles/{p.SteamID})")
+                    .ToList();
+                playerList = string.Join(", ", playerDetails);
+            }
+            else
+            {
+                playerList = _translator["NoPlayersConnectedMessage"];
+            }
+        }
+
+        var fields = new List<object>
+        {
+            new
+            {
+                name = _translator["ServerFieldTitle"],
+                value = $"```{GetIP()}```",
+                inline = false
+            },
+            new
+            {
+                name = _translator["RequestFieldTitle"],
+                value = $"```{clientName}```",
+                inline = false
+            },
+            new
+            {
+                name = _translator["MapFieldTitle"],
+                value = $"```{_currentMap}```",
+                inline = false
+            },
+            new
+            {
+                name = _translator["PlayersFieldTitle"],
+                value = $"```{GetNumberOfPlayers()}/{MaxServerPlayers()}```",
+                inline = false
+            },
+        
+        };
+
+        if (Config.PlayerNameList)
+        {
+            fields.Add(new
+            {
+                name = _translator["PlayerListTitle"],
+                value = playerList,
+                inline = true
+            });
+        }
+
+        fields.Add(new
+        {
+            name = _translator["ConnectionFieldTitle"],
+            value = $"[**`connect {GetIP()}`**]({GetCustomDomain()}?ip={GetIP()})  {_translator["ClickToConnect"]}",
+            inline = false
+        });
+
         var embed = new
         {
             title = _translator["EmbedTitle"],
             description = _translator["EmbedDescription"],
             color = 9246975,
-            fields = new[]
-            {
-                new
-                {
-                    name = _translator["ServerFieldTitle"],
-                    value = $"```{GetIP()}```",
-                    inline = false
-                },
-                new
-                {
-                    name = _translator["RequestFieldTitle"],
-                    value = $"``` {clientName} ```",
-                    inline = false
-                },
-                new
-                {
-                    name = _translator["MapFieldTitle"],
-                    value = $"```{_currentMap}```",
-                    inline = false
-                },
-                new
-                {
-                    name = _translator["PlayersFieldTitle"],
-                    value = $"```{GetNumberOfPlayers()}/{MaxServerPlayers()}```",
-                    inline = false
-                },
-                new
-                {
-                    name = _translator["ConnectionFieldTitle"],
-                    value = $"[**`connect {GetIP()}`**]({GetCustomDomain()}?ip={GetIP()})  {_translator["ClickToConnect"]}",
-                    inline = false
-                }
-            },
+            fields,
             image = Config.EmbedImage ? new
             {
                 url = imageUrl
