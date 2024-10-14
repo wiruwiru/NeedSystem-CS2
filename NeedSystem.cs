@@ -32,6 +32,12 @@ public class BaseConfigs : BasePluginConfig
 
     [JsonPropertyName("Command")]
     public List<string> Command { get; set; } = new List<string> { "css_need", "css_needplayers" };
+
+    [JsonPropertyName("EmbedImage")]
+    public bool EmbedImage { get; set; } = true;
+
+    [JsonPropertyName("ImagesURL")]
+    public string ImagesURL { get; set; } = "https://imagenes.redage.es/CS2/{map}.png";
 }
 
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
@@ -41,7 +47,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.0.5";
+    public override string ModuleVersion => "1.0.6";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -115,6 +121,8 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
         clientName = clientName.Replace("[Ready]", "").Replace("[Not Ready]", "").Trim();
 
+        string imageUrl = Config.ImagesURL.Replace("{map}", _currentMap);
+
         var embed = new
         {
             title = _translator["EmbedTitle"],
@@ -152,7 +160,11 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
                     value = $"[**`connect {GetIP()}`**]({GetCustomDomain()}?ip={GetIP()})  {_translator["ClickToConnect"]}",
                     inline = false
                 }
-            }
+            },
+            image = Config.EmbedImage ? new
+            {
+                url = imageUrl
+            } : null
         };
 
         Task.Run(() => SendEmbedToDiscord(embed));
@@ -173,9 +185,11 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
             var httpClient = new HttpClient();
 
+            string mention = !string.IsNullOrEmpty(MentionRoleID()) ? $"<@&{MentionRoleID()}>" : string.Empty;
+
             var payload = new
             {
-                content = $"<@&{MentionRoleID()}> {_translator["NeedInServerMessage"]}",
+                content = $"{mention} {_translator["NeedInServerMessage"]}",
                 embeds = new[] { embed }
             };
 

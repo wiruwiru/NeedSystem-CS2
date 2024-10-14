@@ -25,6 +25,8 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
 | `MinPlayers` | In this case if there are ten or more players connected the command cannot be used. | **YES** |
 | `CommandCooldownSeconds` | Command cooldown time in seconds. | **YES** |
 | `Command` | You can change the command to be used by the players or add extra commands. | **YES** |
+| `EmbedImage` | Enables or disables the map image to be shown in the Embed. | **YES** |
+| `ImagesURL` | Url from where the map images are taken, recommended to use your own url if you use workshop maps. | **YES** |
 
 ## Configuration example
 ```
@@ -36,7 +38,9 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
     "MaxServerPlayers": 13,
     "MinPlayers": 10,
     "CommandCooldownSeconds": 120,
-    "Command": [ "css_need", "css_needplayers" ]
+    "Command": [ "css_need", "css_needplayers" ],
+    "EmbedImage": true,
+    "ImagesURL": "https://imagenes.redage.es/CS2/{map}.png"
 }
 ```
 
