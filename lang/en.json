@@ -13,7 +13,7 @@
   "ConnectionFieldTitle": "Connection:",
   "ClickToConnect": "[Click to join]",
   "UnknownPlayer": "Unknown",
-  "ProfileLink": "Profile",
   "NoPlayersConnectedMessage": "No players connected",
-  "PlayerListTitle": "List of players"
+  "PlayerListTitle": "List of players",
+  "Hour": "Hour 🕑"
 }

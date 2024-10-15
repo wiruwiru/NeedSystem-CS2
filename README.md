@@ -26,6 +26,7 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
 | `CommandCooldownSeconds` | Command cooldown time in seconds. | **YES** |
 | `Command` | You can change the command to be used by the players or add extra commands. | **YES** |
 | `EmbedImage` | Enables or disables the map image to be shown in the Embed. | **YES** |
+| `EmbedColor` | You can change this to your favorite color, in Hex format. | **YES** |
 | `ImagesURL` | Url from where the map images are taken, recommended to use your own url if you use workshop maps. | **YES** |
 | `PlayerNameList` | Displays a list of the names and profiles of the users who are logged in at the time the command is sent. | **YES** |
 
@@ -41,6 +42,7 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
     "CommandCooldownSeconds": 120,
     "Command": [ "css_need", "css_needplayers" ],
     "EmbedImage": true,
+    "EmbedColor": "#ffb800",
     "ImagesURL": "https://imagenes.redage.es/CS2/{map}.png",
     "PlayerNameList": true
 }
@@ -57,9 +59,8 @@ You can download the **`connect.php`** file directly from here: [Download connec
 > **Note:** Right-click the link and select "Save link as..." to download the file directly.
 
 # Default commands
-`css_need` `css_needplayers` `!need` `!needplayers` - Send message
+`css_need` `css_needplayers` `!need` `!needplayers` - Send message to Discord
 
 ## TO-DO
 - [x] Change configuration file location
-- [ ] Add a button below the embed for “Direct connection” with the possibility to activate and deactivate it.
 - Any improvement you propose to me that you feel would be a good option
