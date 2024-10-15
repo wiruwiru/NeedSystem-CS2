@@ -37,10 +37,10 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
     "IPandPORT": "45.235.99.18:27025",
     "CustomDomain": "https://crisisgamer.com/redirect/connect.php",
     "MentionRoleID": "1111767358881681519",
-    "MaxServerPlayers": 13,
+    "MaxServerPlayers": 12,
     "MinPlayers": 10,
     "CommandCooldownSeconds": 120,
-    "Command": [ "css_need", "css_needplayers" ],
+    "Command": [ "css_need", ".need" ],
     "EmbedImage": true,
     "EmbedColor": "#ffb800",
     "ImagesURL": "https://imagenes.redage.es/CS2/{map}.png",
@@ -59,7 +59,7 @@ You can download the **`connect.php`** file directly from here: [Download connec
 > **Note:** Right-click the link and select "Save link as..." to download the file directly.
 
 # Default commands
-`css_need` `css_needplayers` `!need` `!needplayers` - Send message to Discord
+`!need` `.need` - Send message to Discord
 
 ## TO-DO
 - [x] Change configuration file location

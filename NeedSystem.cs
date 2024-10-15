@@ -4,6 +4,7 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Localization;
+using CounterStrikeSharp.API.Modules.Commands;
 
 namespace NeedSystem;
 
@@ -22,7 +23,7 @@ public class BaseConfigs : BasePluginConfig
     public string MentionRoleID { get; set; } = "";
 
     [JsonPropertyName("MaxServerPlayers")]
-    public int MaxServerPlayers { get; set; } = 13;
+    public int MaxServerPlayers { get; set; } = 12;
 
     [JsonPropertyName("MinPlayers")]
     public int MinPlayers { get; set; } = 10;
@@ -31,7 +32,7 @@ public class BaseConfigs : BasePluginConfig
     public int CommandCooldownSeconds { get; set; } = 120;
 
     [JsonPropertyName("Command")]
-    public List<string> Command { get; set; } = new List<string> { "css_need", "css_needplayers" };
+    public List<string> Command { get; set; } = new List<string> { "css_need", ".need" };
 
     [JsonPropertyName("EmbedImage")]
     public bool EmbedImage { get; set; } = true;
@@ -105,6 +106,50 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         {
             _currentMap = Server.MapName;
         }
+
+        AddCommandListener("say", Listener_Say);
+        AddCommandListener("say_team", Listener_Say);
+    }
+
+    private HookResult Listener_Say(CCSPlayerController? caller, CommandInfo command)
+    {
+        if (caller == null) return HookResult.Continue;
+
+        string message = command.GetCommandString;
+
+        if (Config.Command.Any(cmd => message.Contains(cmd, StringComparison.OrdinalIgnoreCase)))
+        {
+            ExecuteNeedCommand(caller);
+            return HookResult.Handled;
+        }
+
+        return HookResult.Continue;
+    }
+
+    private void ExecuteNeedCommand(CCSPlayerController? caller)
+    {
+        if (caller == null) return;
+
+        int secondsRemaining;
+        if (!CheckCommandCooldown(out secondsRemaining))
+        {
+            caller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", secondsRemaining]);
+            return;
+        }
+
+        int numberOfPlayers = GetNumberOfPlayers();
+
+        if (numberOfPlayers >= MinPlayers())
+        {
+            caller.PrintToChat(_translator["Prefix"] + " " + _translator["EnoughPlayersMessage"]);
+            return;
+        }
+
+        NeedCommand(caller, caller?.PlayerName ?? _translator["UnknownPlayer"]);
+
+        _lastCommandTime = DateTime.Now;
+
+        caller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
     }
 
     public required BaseConfigs Config { get; set; }
