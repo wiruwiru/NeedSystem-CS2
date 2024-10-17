@@ -55,7 +55,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.0.8";
+    public override string ModuleVersion => "1.0.9";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -201,7 +201,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
             if (players.Any())
             {
                 var playerDetails = players
-                    .Select(p => $"[{p.PlayerName}](https://steamcommunity.com/profiles/{p.SteamID})")
+                    .Select(p => $"[{p.PlayerName.Replace("[Ready]", "").Replace("[Not Ready]", "").Trim()}](https://steamcommunity.com/profiles/{p.SteamID})")
                     .ToList();
                 playerList = string.Join(", ", playerDetails);
             }
