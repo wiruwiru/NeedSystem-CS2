@@ -1,7 +1,7 @@
 # NeedSystem CS2
 Allows players to send a message to discord requesting players.
 
-https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
+https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 
 ## Installation
 1. Install [CounterStrike Sharp](https://github.com/roflmuffin/CounterStrikeSharp) and [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master)
