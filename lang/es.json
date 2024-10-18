@@ -15,5 +15,7 @@
   "UnknownPlayer": "Desconocido",
   "NoPlayersConnectedMessage": "No hay jugadores conectados",
   "PlayerListTitle": "Lista de jugadores",
-  "Hour": "Hora 🕑"
+  "Hour": "Hora 🕑",
+  "EmbedAuthorName": "NeedSystem hecho por luca.uy",
+  "EmbedFooterText": " Desarrollado por NeedSystem"
 }

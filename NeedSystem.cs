@@ -22,6 +22,9 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("MentionRoleID")]
     public string MentionRoleID { get; set; } = "";
 
+    [JsonPropertyName("MentionMessage")]
+    public bool MentionMessage { get; set; } = true;
+
     [JsonPropertyName("MaxServerPlayers")]
     public int MaxServerPlayers { get; set; } = 12;
 
@@ -46,6 +49,21 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("PlayerNameList")]
     public bool PlayerNameList { get; set; } = true;
 
+    [JsonPropertyName("EmbedFooter")]
+    public bool EmbedFooter { get; set; } = true;
+
+    [JsonPropertyName("EmbedFooterImage")]
+    public string EmbedFooterImage { get; set; } = "https://avatars.githubusercontent.com/u/61034981?v=4";
+
+    [JsonPropertyName("EmbedAuthor")]
+    public bool EmbedAuthor { get; set; } = true;
+
+    [JsonPropertyName("EmbedAuthorURL")]
+    public string EmbedAuthorURL { get; set; } = "https://lucauy.dev";
+
+    [JsonPropertyName("EmbedAuthorImage")]
+    public string EmbedAuthorImage { get; set; } = "https://avatars.githubusercontent.com/u/61034981?v=4";
+
 }
 
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
@@ -55,7 +73,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.0.9";
+    public override string ModuleVersion => "1.1.0";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -272,6 +290,17 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
             image = Config.EmbedImage ? new
             {
                 url = imageUrl
+            } : null,
+            footer = Config.EmbedFooter ? new
+            {
+                text = _translator["EmbedFooterText"],
+                icon_url = Config.EmbedFooterImage
+            } : null,
+            author = Config.EmbedAuthor ? new
+            {
+                name = _translator["EmbedAuthorName"],
+                url = Config.EmbedAuthorURL,
+                icon_url = Config.EmbedAuthorImage
             } : null
         };
 
@@ -293,17 +322,22 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
             var httpClient = new HttpClient();
 
-            string mention = !string.IsNullOrEmpty(MentionRoleID()) ? $"<@&{MentionRoleID()}>" : string.Empty;
+            string content = string.Empty;
+            if (Config.MentionMessage)
+            {
+                string mention = !string.IsNullOrEmpty(MentionRoleID()) ? $"<@&{MentionRoleID()}>" : string.Empty;
+                content = $"{mention} {_translator["NeedInServerMessage"]}";
+            }
 
             var payload = new
             {
-                content = $"{mention} {_translator["NeedInServerMessage"]}",
+                content = content,
                 embeds = new[] { embed }
             };
 
             var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(webhookUrl, content);
+            var contentString = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync(webhookUrl, contentString);
 
             Console.ForegroundColor = response.IsSuccessStatusCode ? ConsoleColor.Green : ConsoleColor.Red;
             Console.WriteLine(response.IsSuccessStatusCode ? "Success" : $"Error: {response.StatusCode}");

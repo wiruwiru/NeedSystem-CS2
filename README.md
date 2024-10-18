@@ -21,6 +21,7 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
 | `IPandPORT` | Replace with the IP address of your server. |**YES** |
 | `CustomDomain` | You can replace it with your domain if you want, the connect.php file is available in the main branch  |**YES** |
 | `MentionRoleID` | You must have the discord developer mode activated, right click on the role and copy its ID. |**NO** |
+| `MentionMessage` | You can use this option to deactivate the mention message completely, with this deactivated only the embed will be sent. |**YES** |
 | `MaxServerPlayers` | Maximum number of slots your server has. |**YES** |
 | `MinPlayers` | In this case if there are ten or more players connected the command cannot be used. | **YES** |
 | `CommandCooldownSeconds` | Command cooldown time in seconds. | **YES** |
@@ -29,6 +30,11 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
 | `EmbedColor` | You can change this to your favorite color, in Hex format. | **YES** |
 | `ImagesURL` | Url from where the map images are taken, recommended to use your own url if you use workshop maps. | **YES** |
 | `PlayerNameList` | Displays a list of the names and profiles of the users who are logged in at the time the command is sent. | **YES** |
+| `EmbedFooter` | You can use this option to disable or enable the embed footer. | **YES** |
+| `EmbedFooterImage` | It will be the image (logo) that will appear in the embed footer. | **YES** |
+| `EmbedAuthor` | You can use this option to disable or enable the embed author. | **YES** |
+| `EmbedAuthorURL` | This will be the url that will be redirected to when a user clicks on the embed author. | **YES** |
+| `EmbedAuthorImage` | It will be the image (logo) that will appear as the author of the embed. | **YES** |
 
 ## Configuration example
 ```
@@ -44,7 +50,12 @@ https://github.com/user-attachments/assets/0bc0217f-4371-44a0-bfc6-36a5531376a7
     "EmbedImage": true,
     "EmbedColor": "#ffb800",
     "ImagesURL": "https://imagenes.redage.es/CS2/{map}.png",
-    "PlayerNameList": true
+    "PlayerNameList": true,
+    "EmbedFooter": false,
+    "EmbedFooterImage": "https://avatars.githubusercontent.com/u/61034981?v=4",
+    "EmbedAuthor": false,
+    "EmbedAuthorURL": "https://lucauy.dev",
+    "EmbedAuthorImage": "https://avatars.githubusercontent.com/u/61034981?v=4"
 }
 ```
 
