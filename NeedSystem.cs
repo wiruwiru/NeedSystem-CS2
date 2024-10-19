@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Core;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Localization;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Cvars;
 
 namespace NeedSystem;
 
@@ -64,6 +65,12 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("EmbedAuthorImage")]
     public string EmbedAuthorImage { get; set; } = "https://avatars.githubusercontent.com/u/61034981?v=4";
 
+    [JsonPropertyName("EmbedThumbnail")]
+    public bool EmbedThumbnail { get; set; } = true;
+
+    [JsonPropertyName("EmbedThumbnailImage")]
+    public string EmbedThumbnailImage { get; set; } = "https://avatars.githubusercontent.com/u/61034981?v=4";
+
 }
 
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
@@ -73,7 +80,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.1.0";
+    public override string ModuleVersion => "1.1.1";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -301,6 +308,10 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
                 name = _translator["EmbedAuthorName"],
                 url = Config.EmbedAuthorURL,
                 icon_url = Config.EmbedAuthorImage
+            } : null,
+            thumbnail = Config.EmbedThumbnail ? new
+            {
+                url = Config.EmbedThumbnailImage,
             } : null
         };
 
@@ -347,6 +358,16 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
             Console.WriteLine(e);
             throw;
         }
+    }
+
+    private string GetHostname()
+    {
+        string hostname = ConVar.Find("hostname")?.StringValue ?? _translator["NeedInServerMessage"];
+        if(string.IsNullOrEmpty(hostname) || hostname.Length <= 3)
+        {
+            hostname = _translator["NeedInServerMessage"];
+        }
+        return hostname;
     }
 
     private string GetWebhook()

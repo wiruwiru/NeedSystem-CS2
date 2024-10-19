@@ -35,6 +35,8 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 | `EmbedAuthor` | You can use this option to disable or enable the embed author. | **YES** |
 | `EmbedAuthorURL` | This will be the url that will be redirected to when a user clicks on the embed author. | **YES** |
 | `EmbedAuthorImage` | It will be the image (logo) that will appear as the author of the embed. | **YES** |
+| `EmbedThumbnail` | You can use this option to disable or enable the embed thumbnail. | **YES** |
+| `EmbedThumbnailImage` | It will be the image (logo) that will appear as the author of the embed. | **YES** |
 
 ## Configuration example
 ```
@@ -43,6 +45,7 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
     "IPandPORT": "45.235.99.18:27025",
     "CustomDomain": "https://crisisgamer.com/redirect/connect.php",
     "MentionRoleID": "1111767358881681519",
+    "MentionMessage": true,
     "MaxServerPlayers": 12,
     "MinPlayers": 10,
     "CommandCooldownSeconds": 120,
@@ -55,7 +58,9 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
     "EmbedFooterImage": "https://avatars.githubusercontent.com/u/61034981?v=4",
     "EmbedAuthor": false,
     "EmbedAuthorURL": "https://lucauy.dev",
-    "EmbedAuthorImage": "https://avatars.githubusercontent.com/u/61034981?v=4"
+    "EmbedAuthorImage": "https://avatars.githubusercontent.com/u/61034981?v=4",
+    "EmbedThumbnail": true,
+    "EmbedThumbnailImage": "https://avatars.githubusercontent.com/u/61034981?v=4",
 }
 ```
 
