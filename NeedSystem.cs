@@ -71,6 +71,12 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("EmbedThumbnailImage")]
     public string EmbedThumbnailImage { get; set; } = "https://avatars.githubusercontent.com/u/61034981?v=4";
 
+    [JsonPropertyName("UseHostname")]
+    public bool UseHostname { get; set; } = true;
+
+    [JsonPropertyName("GetIPandPORTautomatic")]
+    public bool GetIPandPORTautomatic { get; set; } = true;
+
 }
 
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
@@ -80,7 +86,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.1.1";
+    public override string ModuleVersion => "1.1.2";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -290,7 +296,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
         var embed = new
         {
-            title = _translator["EmbedTitle"],
+            title = Config.UseHostname ? (ConVar.Find("hostname")?.StringValue ?? _translator["EmbedTitle"]) : _translator["EmbedTitle"],
             description = _translator["EmbedDescription"],
             color = ConvertHexToColor(Config.EmbedColor),
             fields,
@@ -363,7 +369,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private string GetHostname()
     {
         string hostname = ConVar.Find("hostname")?.StringValue ?? _translator["NeedInServerMessage"];
-        if(string.IsNullOrEmpty(hostname) || hostname.Length <= 3)
+        if (string.IsNullOrEmpty(hostname) || hostname.Length <= 3)
         {
             hostname = _translator["NeedInServerMessage"];
         }
@@ -380,7 +386,24 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     }
     private string GetIP()
     {
-        return Config.IPandPORT;
+        if (Config.GetIPandPORTautomatic)
+        {
+            string? ip = ConVar.Find("ip")?.StringValue;
+            string? port = ConVar.Find("hostport")?.GetPrimitiveValue<int>().ToString();
+
+            if (!string.IsNullOrEmpty(ip) && !string.IsNullOrEmpty(port))
+            {
+                return $"{ip}:{port}";
+            }
+            else
+            {
+                return Config.IPandPORT;
+            }
+        }
+        else
+        {
+            return Config.IPandPORT;
+        }
     }
     private string MentionRoleID()
     {

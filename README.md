@@ -37,6 +37,8 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 | `EmbedAuthorImage` | It will be the image (logo) that will appear as the author of the embed. | **YES** |
 | `EmbedThumbnail` | You can use this option to disable or enable the embed thumbnail. | **YES** |
 | `EmbedThumbnailImage` | It will be the image (logo) that will appear as the author of the embed. | **YES** |
+| `UseHostname` | If you set this configuration to true, the “EmbedTitle” of the translation will be replaced by the hostname you have configured in your server.cfg file. | **YES** |
+| `GetIPandPORTautomatic` | When you activate this option the plugin will try to get the IP:PORT of your server automatically, in case it is not possible use the IPandPORT configuration. | **YES** |
 
 ## Configuration example
 ```
@@ -61,6 +63,8 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
     "EmbedAuthorImage": "https://avatars.githubusercontent.com/u/61034981?v=4",
     "EmbedThumbnail": true,
     "EmbedThumbnailImage": "https://avatars.githubusercontent.com/u/61034981?v=4",
+    "UseHostname": true,
+    "GetIPandPORTautomatic": true,
 }
 ```
 
