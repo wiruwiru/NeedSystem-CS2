@@ -17,6 +17,12 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("IPandPORT")]
     public string IPandPORT { get; set; } = "45.235.99.18:27025";
 
+    [JsonPropertyName("GetIPandPORTautomatic")]
+    public bool GetIPandPORTautomatic { get; set; } = true;
+
+    [JsonPropertyName("UseHostname")]
+    public bool UseHostname { get; set; } = true;
+
     [JsonPropertyName("CustomDomain")]
     public string CustomDomain { get; set; } = "https://crisisgamer.com/redirect/connect.php";
 
@@ -28,6 +34,9 @@ public class BaseConfigs : BasePluginConfig
 
     [JsonPropertyName("MaxServerPlayers")]
     public int MaxServerPlayers { get; set; } = 12;
+
+    [JsonPropertyName("GetMaxServerPlayers")]
+    public bool GetMaxServerPlayers { get; set; } = true;
 
     [JsonPropertyName("MinPlayers")]
     public int MinPlayers { get; set; } = 10;
@@ -71,12 +80,6 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("EmbedThumbnailImage")]
     public string EmbedThumbnailImage { get; set; } = "https://avatars.githubusercontent.com/u/61034981?v=4";
 
-    [JsonPropertyName("UseHostname")]
-    public bool UseHostname { get; set; } = true;
-
-    [JsonPropertyName("GetIPandPORTautomatic")]
-    public bool GetIPandPORTautomatic { get; set; } = true;
-
 }
 
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
@@ -86,7 +89,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.1.2";
+    public override string ModuleVersion => "1.1.3";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -366,16 +369,6 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         }
     }
 
-    private string GetHostname()
-    {
-        string hostname = ConVar.Find("hostname")?.StringValue ?? _translator["NeedInServerMessage"];
-        if (string.IsNullOrEmpty(hostname) || hostname.Length <= 3)
-        {
-            hostname = _translator["NeedInServerMessage"];
-        }
-        return hostname;
-    }
-
     private string GetWebhook()
     {
         return Config.WebhookUrl;
@@ -409,10 +402,19 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     {
         return Config.MentionRoleID;
     }
-    private int MaxServerPlayers()
+
+    private string MaxServerPlayers()
     {
-        return Config.MaxServerPlayers;
+        if (Config.GetMaxServerPlayers)
+        {
+            return Server.MaxPlayers.ToString();
+        }
+        else
+        {
+            return Config.MaxServerPlayers.ToString();
+        }
     }
+
     private int MinPlayers()
     {
         return Config.MinPlayers;
