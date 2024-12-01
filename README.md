@@ -58,7 +58,7 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
     "Command": [ "css_need", ".need" ],
     "EmbedImage": true,
     "EmbedColor": "#ffb800",
-    "ImagesURL": "https://imagenes.redage.es/CS2/{map}.png",
+    "ImagesURL": "https://imagenes.lucauy.dev/CS2/{map}.png",
     "PlayerNameList": true,
     "EmbedFooter": false,
     "EmbedFooterImage": "https://avatars.githubusercontent.com/u/61034981?v=4",
