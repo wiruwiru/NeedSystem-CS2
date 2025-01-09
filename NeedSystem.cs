@@ -60,7 +60,15 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
                 _lastCommandTime = DateTime.Now;
 
-                controller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
+                if (Config.NotifyAllPlayers)
+                {
+                    Server.PrintToChatAll(_translator["Prefix"] + " " + _translator["NotifyAllPlayersMessage", controller?.PlayerName ?? _translator["UnknownPlayer"], Config.CommandCooldownSeconds]);
+                }
+                else
+                {
+                    controller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
+                }
+                
             });
         }
 
@@ -111,7 +119,6 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
         _lastCommandTime = DateTime.Now;
 
-        // caller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
         if (Config.NotifyAllPlayers)
         {
             Server.PrintToChatAll(_translator["Prefix"] + " " + _translator["NotifyAllPlayersMessage", caller?.PlayerName ?? _translator["UnknownPlayer"], Config.CommandCooldownSeconds]);
