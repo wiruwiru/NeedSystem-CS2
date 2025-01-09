@@ -5,9 +5,11 @@ using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.Localization;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
+using CounterStrikeSharp.API.Core.Attributes;
 
 namespace NeedSystem;
 
+[MinimumApiVersion(290)]
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 {
     private string _currentMap = "";
@@ -15,7 +17,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.1.4";
+    public override string ModuleVersion => "1.1.5";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -109,7 +111,16 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
         _lastCommandTime = DateTime.Now;
 
-        caller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
+        // caller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
+        if (Config.NotifyAllPlayers)
+        {
+            Server.PrintToChatAll(_translator["Prefix"] + " " + _translator["NotifyAllPlayersMessage", caller?.PlayerName ?? _translator["UnknownPlayer"], Config.CommandCooldownSeconds]);
+        }
+        else
+        {
+            caller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
+        }
+
     }
 
     public required BaseConfigs Config { get; set; }

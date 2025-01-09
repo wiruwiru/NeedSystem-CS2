@@ -17,6 +17,9 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("UseHostname")]
     public bool UseHostname { get; set; } = true;
 
+    [JsonPropertyName("NotifyAllPlayers")]
+    public bool NotifyAllPlayers { get; set; } = true;
+
     [JsonPropertyName("CustomDomain")]
     public string CustomDomain { get; set; } = "https://crisisgamer.com/connect";
 
