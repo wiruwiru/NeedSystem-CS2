@@ -1,0 +1,22 @@
+{
+  "Prefix": "[{GOLD}NEED{BLUE}SYSTEM{WHITE}]",
+  "CommandCooldownMessage": "{GOLD}Musisz odczekać {RED}{0} {GOLD}sekund przed ponownym użyciem komendy.",
+  "EnoughPlayersMessage": "Na serwerze jest już wystarczająca liczba graczy.",
+  "NotifyPlayersMessage": "{RED}Poinformowałeś innych graczy, że jest dostępne miejsce na serwerze.",
+  "NotifyAllPlayersMessage": "{0} poprosił o więcej graczy. Możesz wysłać kolejną prośbę za {1} sekund.",
+  "EmbedTitle": "Potrzebni gracze!",
+  "EmbedDescription": "Możesz połączyć się, klikając link podany w sekcji Połączenie.",
+  "NeedInServerMessage": "Jesteś potrzebny na serwerze.",
+  "ServerFieldTitle": "Serwer 🌍",
+  "RequestFieldTitle": "Prośba o 👥",
+  "MapFieldTitle": "Obecna mapa 🗺️",
+  "PlayersFieldTitle": "Połączeni gracze 🎮",
+  "ConnectionFieldTitle": "Połączenie:",
+  "ClickToConnect": "[Kliknij, aby dołączyć]",
+  "UnknownPlayer": "Nieznany",
+  "NoPlayersConnectedMessage": "Brak połączonych graczy",
+  "PlayerListTitle": "Lista graczy",
+  "Hour": "Godzina 🕑",
+  "EmbedAuthorName": "NeedSystem stworzony przez luca.uy",
+  "EmbedFooterText": "Powered by NeedSystem"
+}
