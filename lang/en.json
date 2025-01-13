@@ -3,6 +3,7 @@
   "CommandCooldownMessage": "{GOLD}You must wait {RED}{0} {GOLD}seconds before using this command again.",
   "EnoughPlayersMessage": "There are already enough players on the server.",
   "NotifyPlayersMessage": "{RED}You have notified other players that there is an available slot for them to join.",
+  "NotifyAllPlayersMessage": "{0} has requested more players. You can send another request in {1} seconds.",
   "EmbedTitle": "Players Needed!",
   "EmbedDescription": "You can connect by clicking on the link provided under Connection",
   "NeedInServerMessage": "You are needed on the server",

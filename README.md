@@ -18,6 +18,7 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 | Parameter | Description | Required     |
 | :------- | :------- | :------- |
 | `WebhookUrl` | You must create it in the channel where you will send the notices. |**YES** |
+| `NotifyAllPlayers` | When a user uses !need it notifies the whole server that the command was used and how long it takes to be able to use the command again, if it is set to false only the user who used the command will be notified. |**YES** |
 | `IPandPORT` | Replace with the IP address of your server. |**YES** |
 | `GetIPandPORTautomatic` | When you activate this option the plugin will try to get the IP:PORT of your server automatically, in case it is not possible use the IPandPORT configuration. | **YES** |
 | `UseHostname` | If you set this configuration to true, the “EmbedTitle” of the translation will be replaced by the hostname you have configured in your server.cfg file. | **YES** |
@@ -45,6 +46,7 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 ```
 {
     "WebhookUrl": "https://discord.com/api/webhooks/xxxxx/xxxxxxxxx,
+    "NotifyAllPlayers": false,
     "IPandPORT": "45.235.99.18:27025",
     "GetIPandPORTautomatic": true,
     "UseHostname": true,

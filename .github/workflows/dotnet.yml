@@ -26,7 +26,7 @@ jobs:
     - name: Restore
       run: dotnet restore
     - name: Build
-      run: dotnet build ${{ env.PROJECT_PATH }} -c WeaponPaints -o ${{ env.OUTPUT_PATH }}
+      run: dotnet build ${{ env.PROJECT_PATH }} -c Release -o ${{ env.OUTPUT_PATH }}
 
   publish:
     if: github.event_name == 'push'
@@ -42,22 +42,12 @@ jobs:
     - name: Restore
       run: dotnet restore
     - name: Build
-      run: dotnet build ${{ env.PROJECT_PATH }} -c WeaponPaints -o ${{ env.OUTPUT_PATH }}
+      run: dotnet build ${{ env.PROJECT_PATH }} -c Release -o ${{ env.OUTPUT_PATH }}
     - name: Zip
       run: |
         cd ${{ env.OUTPUT_PATH }}
         # Crear el zip con los archivos de la compilación
         zip -r ../${{ env.PROJECT_NAME }}.zip .
-        
-        # Regresar a la raíz del proyecto para incluir la carpeta 'lang'
-        cd ..
-        if [ -d "./lang" ]; then
-          # Agregar la carpeta 'lang' al zip
-          zip -ur ./${{ env.PROJECT_NAME }}.zip ./lang
-        else
-          echo "The 'lang' directory does not exist."
-          exit 1
-        fi
     - name: NeedSystem
       uses: ncipollo/release-action@v1.12.0
       with:
@@ -65,5 +55,6 @@ jobs:
         name: "NeedSystem v${{ env.BUILD_NUMBER }}"
         tag: "build-${{ env.BUILD_NUMBER }}"
         body: |
-          Place the plugin in game/csgo/addons/counterstrikesharp/plugins/NeedSystem
-          After first server start, config.json be created
+          Place the plugin in **`csgo/addons/counterstrikesharp/plugins/NeedSystem`**.
+          
+          After the first server startup, the configuration file will be created in **`csgo/addons/counterstrikesharp/configs/plugins/NeedSystem`**.

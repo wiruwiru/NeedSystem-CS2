@@ -8,6 +8,9 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("WebhookUrl")]
     public string WebhookUrl { get; set; } = "";
 
+    [JsonPropertyName("NotifyAllPlayers")]
+    public bool NotifyAllPlayers { get; set; } = false;
+
     [JsonPropertyName("IPandPORT")]
     public string IPandPORT { get; set; } = "45.235.99.18:27025";
 
