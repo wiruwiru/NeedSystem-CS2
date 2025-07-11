@@ -41,6 +41,12 @@ public class BaseConfigs : BasePluginConfig
     [JsonPropertyName("CommandCooldownSeconds")]
     public int CommandCooldownSeconds { get; set; } = 120;
 
+    [JsonPropertyName("DontCountAdmins")]
+    public bool DontCountAdmins { get; set; } = false;
+
+    [JsonPropertyName("AdminBypassFlag")]
+    public string AdminBypassFlag { get; set; } = "@css/generic";
+
     [JsonPropertyName("Command")]
     public List<string> Command { get; set; } = new List<string> { "css_need", ".need" };
 
