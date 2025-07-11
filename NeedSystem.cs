@@ -6,6 +6,8 @@ using Microsoft.Extensions.Localization;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Core.Attributes;
+using CounterStrikeSharp.API.Modules.Utils;
+using CounterStrikeSharp.API.Modules.Admin;
 
 namespace NeedSystem;
 
@@ -17,7 +19,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private Translator _translator;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.1.5";
+    public override string ModuleVersion => "1.1.6";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -146,7 +148,25 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     public int GetNumberOfPlayers()
     {
         var players = Utilities.GetPlayers();
-        return players.Count(p => !p.IsBot && !p.IsHLTV);
+        return players.Where(p => !p.IsBot && !p.IsHLTV && ShouldShowPlayerInList(p)).Count();
+    }
+
+    private bool ShouldShowPlayerInList(CCSPlayerController player)
+    {
+        if (!Config.DontCountAdmins || string.IsNullOrEmpty(Config.AdminBypassFlag))
+            return true;
+
+        try
+        {
+            if (!AdminManager.PlayerHasPermissions(player, Config.AdminBypassFlag))
+                return true;
+
+            return player.Team == CsTeam.Terrorist || player.Team == CsTeam.CounterTerrorist;
+        }
+        catch
+        {
+            return true;
+        }
     }
 
     private int ConvertHexToColor(string hex)
@@ -172,6 +192,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         {
             var players = Utilities.GetPlayers()
                 .Where(p => !p.IsBot && !p.IsHLTV && p.Connected == PlayerConnectedState.PlayerConnected)
+                .Where(ShouldShowPlayerInList)
                 .Select(p => new { p.PlayerName, p.SteamID })
                 .ToList();
 
@@ -294,7 +315,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
             var payload = new
             {
-                content = content,
+                content,
                 embeds = new[] { embed }
             };
 
