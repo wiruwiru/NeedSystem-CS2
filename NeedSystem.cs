@@ -7,6 +7,7 @@ using NeedSystem.Services;
 using NeedSystem.Utils;
 using NeedSystem.Models;
 using NeedSystem.Constants;
+using NeedSystem.Configs;
 
 namespace NeedSystem;
 
@@ -46,9 +47,9 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
     private void InitializeServices()
     {
-        _cooldownService = new CooldownService(Config.CommandCooldownSeconds);
-        _playerService = new PlayerService(Config.DontCountAdmins, Config.AdminBypassFlag);
-        _discordService = new DiscordService(Config.WebhookUrl);
+        _cooldownService = new CooldownService(Config.Commands.CooldownSeconds);
+        _playerService = new PlayerService(Config.Player.DontCountSpecAdmins, Config.Player.AdminBypassFlag);
+        _discordService = new DiscordService(Config.Discord.WebhookUrl);
     }
 
     private void RegisterEventListeners()
@@ -64,7 +65,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
     private void RegisterCommands()
     {
-        foreach (var command in Config.Command)
+        foreach (var command in Config.Commands.Command)
         {
             AddCommand(command, "Request more players on Discord", OnNeedCommand);
         }
@@ -82,7 +83,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
         string message = command.GetCommandString;
 
-        if (Config.Command.Any(cmd => message.Contains(cmd, StringComparison.OrdinalIgnoreCase)))
+        if (Config.Commands.Command.Any(cmd => message.Contains(cmd, StringComparison.OrdinalIgnoreCase)))
         {
             ExecuteNeedCommand(caller);
             return HookResult.Handled;
@@ -102,7 +103,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         }
 
         int playerCount = _playerService.GetPlayerCount();
-        if (playerCount >= Config.MinPlayers)
+        if (playerCount >= Config.Server.MinPlayers)
         {
             controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.EnoughPlayersMessage]}");
             return;
@@ -117,9 +118,9 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
     private void NotifyPlayers(CCSPlayerController controller, string playerName)
     {
-        if (Config.NotifyAllPlayers)
+        if (Config.Player.NotifyAllPlayers)
         {
-            Server.PrintToChatAll($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.NotifyAllPlayersMessage, playerName, Config.CommandCooldownSeconds]}");
+            Server.PrintToChatAll($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.NotifyAllPlayersMessage, playerName, Config.Commands.CooldownSeconds]}");
         }
         else
         {
@@ -132,11 +133,11 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         if (_discordService == null || _playerService == null) return;
 
         var embed = BuildDiscordEmbed(playerName);
-        string? mentionMessage = Config.MentionMessage ? Convert.ToString(Localizer[LocalizationKeys.NeedInServerMessage]) : null;
+        string? mentionMessage = Config.Discord.MentionMessage ? Convert.ToString(Localizer[LocalizationKeys.NeedInServerMessage]) : null;
 
         Task.Run(() => _discordService.SendEmbedAsync(
             embed.Build(),
-            Config.MentionRoleID,
+            Config.Discord.MentionRoleID,
             mentionMessage
         ));
     }
@@ -144,21 +145,22 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private DiscordEmbedBuilder BuildDiscordEmbed(string playerName)
     {
         string cleanPlayerName = TextHelper.CleanPlayerName(playerName);
-        string serverAddress = ServerHelper.GetServerAddress(Config.GetIPandPORTautomatic, Config.IPandPORT);
-        int maxPlayers = ServerHelper.GetMaxPlayers(Config.GetMaxServerPlayers, Config.MaxServerPlayers, Server.MaxPlayers);
+        string serverAddress = ServerHelper.GetServerAddress(Config.Server.GetIPandPORTautomatic, Config.Server.IPandPORT);
+        int maxPlayers = ServerHelper.GetMaxPlayers(Config.Server.GetMaxServerPlayers, Config.Server.MaxServerPlayers, Server.MaxPlayers);
         string currentTime = DateTime.Now.ToString("HH:mm");
 
         var embedBuilder = new DiscordEmbedBuilder
         {
-            Title = Config.UseHostname
+            Title = Config.Server.UseHostname
                 ? ServerHelper.GetServerHostname(ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedTitle]))
                 : ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedTitle]),
             Description = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedDescription]),
-            Color = ColorHelper.ConvertHexToColor(Config.EmbedColor)
+            Color = ColorHelper.ConvertHexToColor(Config.Discord.Embed.Color)
         };
 
         AddBasicFields(embedBuilder, serverAddress, maxPlayers, currentTime, cleanPlayerName);
-        if (Config.PlayerNameList && _playerService != null)
+
+        if (Config.Discord.ShowPlayerNameList && _playerService != null)
         {
             string playerList = _playerService.GetFormattedPlayerList(Localizer[LocalizationKeys.NoPlayersConnectedMessage]);
             embedBuilder.Fields.Add(new EmbedField
@@ -217,7 +219,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private void AddConnectionField(DiscordEmbedBuilder builder, string serverAddress)
     {
         string clickToConnect = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.ClickToConnect]);
-        string connectionUrl = $"{Config.CustomDomain}?ip={serverAddress}";
+        string connectionUrl = $"{Config.Server.CustomDomain}?ip={serverAddress}";
 
         builder.Fields.Add(new EmbedField
         {
@@ -229,38 +231,38 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
     private void ConfigureVisualElements(DiscordEmbedBuilder builder)
     {
-        if (Config.EmbedImage)
+        if (Config.Discord.Embed.ShowImage)
         {
             builder.Image = new EmbedImage
             {
-                Url = Config.ImagesURL.Replace("{map}", _currentMap)
+                Url = Config.Discord.Embed.ImagesURL.Replace("{map}", _currentMap)
             };
         }
 
-        if (Config.EmbedFooter)
+        if (Config.Discord.Embed.Footer.Enabled)
         {
             builder.Footer = new EmbedFooter
             {
                 Text = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedFooterText]),
-                IconUrl = Config.EmbedFooterImage
+                IconUrl = Config.Discord.Embed.Footer.ImageUrl
             };
         }
 
-        if (Config.EmbedAuthor)
+        if (Config.Discord.Embed.Author.Enabled)
         {
             builder.Author = new EmbedAuthor
             {
                 Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedAuthorName]),
-                Url = Config.EmbedAuthorURL,
-                IconUrl = Config.EmbedAuthorImage
+                Url = Config.Discord.Embed.Author.Url,
+                IconUrl = Config.Discord.Embed.Author.ImageUrl
             };
         }
 
-        if (Config.EmbedThumbnail)
+        if (Config.Discord.Embed.Thumbnail.Enabled)
         {
             builder.Thumbnail = new EmbedThumbnail
             {
-                Url = Config.EmbedThumbnailImage
+                Url = Config.Discord.Embed.Thumbnail.ImageUrl
             };
         }
     }

@@ -9,12 +9,12 @@ namespace NeedSystem.Services;
 
 public class PlayerService
 {
-    private readonly bool _dontCountAdmins;
+    private readonly bool _dontCountSpecAdmins;
     private readonly string _adminBypassFlag;
 
-    public PlayerService(bool dontCountAdmins, string adminBypassFlag)
+    public PlayerService(bool dontCountSpecAdmins, string adminBypassFlag)
     {
-        _dontCountAdmins = dontCountAdmins;
+        _dontCountSpecAdmins = dontCountSpecAdmins;
         _adminBypassFlag = adminBypassFlag;
     }
 
@@ -51,7 +51,7 @@ public class PlayerService
 
     private bool ShouldCountPlayer(CCSPlayerController player)
     {
-        if (!_dontCountAdmins || string.IsNullOrEmpty(_adminBypassFlag))
+        if (!_dontCountSpecAdmins || string.IsNullOrEmpty(_adminBypassFlag))
             return true;
 
         try
