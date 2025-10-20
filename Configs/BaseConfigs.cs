@@ -16,4 +16,7 @@ public class BaseConfigs : BasePluginConfig
 
     [JsonPropertyName("PlayerSettings")]
     public PlayerSettings Player { get; set; } = new();
+
+    [JsonPropertyName("Database")]
+    public DatabaseConfig Database { get; set; } = new();
 }

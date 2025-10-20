@@ -17,6 +17,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private CooldownService? _cooldownService;
     private PlayerService? _playerService;
     private DiscordService? _discordService;
+    private DatabaseService? _databaseService;
 
     private string _currentMap = string.Empty;
 
@@ -37,12 +38,41 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         {
             _currentMap = Server.MapName;
         }
+
+        _ = InitializeDatabaseAsync();
     }
 
     public void OnConfigParsed(BaseConfigs config)
     {
         Config = config;
         InitializeServices();
+        _ = InitializeDatabaseAsync();
+    }
+
+    private async Task InitializeDatabaseAsync()
+    {
+        try
+        {
+            if (_databaseService != null && Config.Database.Enabled)
+            {
+                await _databaseService.InitializeDatabase();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("[NeedSystem] Database initialized successfully!");
+                Console.ResetColor();
+            }
+            else if (_databaseService != null && !Config.Database.Enabled)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("[NeedSystem] Database is disabled in configuration");
+                Console.ResetColor();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"[NeedSystem] Failed to initialize database: {ex.Message}");
+            Console.ResetColor();
+        }
     }
 
     private void InitializeServices()
@@ -50,6 +80,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         _cooldownService = new CooldownService(Config.Commands.CooldownSeconds);
         _playerService = new PlayerService(Config.Player.DontCountSpecAdmins, Config.Player.AdminBypassFlag);
         _discordService = new DiscordService(Config.Discord.WebhookUrl);
+        _databaseService = new DatabaseService(Config.Database);
     }
 
     private void RegisterEventListeners()
@@ -135,11 +166,61 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         var embed = BuildDiscordEmbed(playerName);
         string? mentionMessage = Config.Discord.MentionMessage ? Convert.ToString(Localizer[LocalizationKeys.NeedInServerMessage]) : null;
 
-        Task.Run(() => _discordService.SendEmbedAsync(
-            embed.Build(),
-            Config.Discord.MentionRoleID,
-            mentionMessage
-        ));
+        NotificationRecord? notificationRecord = null;
+        if (_databaseService != null && _databaseService.IsEnabled())
+        {
+            string cleanPlayerName = TextHelper.CleanPlayerName(playerName);
+            string serverAddress = ServerHelper.GetServerAddress(Config.Server.GetIPandPORTautomatic, Config.Server.IPandPORT);
+            int maxPlayers = ServerHelper.GetMaxPlayers(Config.Server.GetMaxServerPlayers, Config.Server.MaxServerPlayers, Server.MaxPlayers);
+            int playerCount = _playerService.GetPlayerCount();
+
+            notificationRecord = new NotificationRecord
+            {
+                Uuid = Guid.NewGuid().ToString(),
+                ServerAddress = serverAddress,
+                ConnectedPlayers = playerCount,
+                MaxPlayers = maxPlayers,
+                MapName = _currentMap,
+                Timestamp = DateTime.Now,
+                RequestedBy = cleanPlayerName
+            };
+        }
+
+        Task.Run(async () =>
+        {
+            await _discordService.SendEmbedAsync(
+                embed.Build(),
+                Config.Discord.MentionRoleID,
+                mentionMessage
+            );
+
+            if (notificationRecord != null && _databaseService != null)
+            {
+                await SaveNotificationToDatabase(notificationRecord);
+            }
+        });
+    }
+
+    private async Task SaveNotificationToDatabase(NotificationRecord record)
+    {
+        if (_databaseService == null) return;
+
+        try
+        {
+            bool saved = await _databaseService.SaveNotification(record);
+            if (saved)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[NeedSystem] Notification record saved to database (UUID: {record.Uuid})");
+                Console.ResetColor();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"[NeedSystem] Error saving notification to database: {ex.Message}");
+            Console.ResetColor();
+        }
     }
 
     private DiscordEmbedBuilder BuildDiscordEmbed(string playerName)
