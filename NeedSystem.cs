@@ -1,89 +1,82 @@
-﻿using System.Text;
-using System.Text.Json;
-using CounterStrikeSharp.API;
+﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using Microsoft.Extensions.Localization;
 using CounterStrikeSharp.API.Modules.Commands;
-using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Core.Attributes;
-using CounterStrikeSharp.API.Modules.Utils;
-using CounterStrikeSharp.API.Modules.Admin;
+
+using NeedSystem.Services;
+using NeedSystem.Utils;
+using NeedSystem.Models;
+using NeedSystem.Constants;
 
 namespace NeedSystem;
 
-[MinimumApiVersion(290)]
+[MinimumApiVersion(342)]
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 {
-    private string _currentMap = "";
-    private DateTime _lastCommandTime = DateTime.MinValue;
-    private Translator _translator;
+    private CooldownService? _cooldownService;
+    private PlayerService? _playerService;
+    private DiscordService? _discordService;
+
+    private string _currentMap = string.Empty;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.1.6";
+    public override string ModuleVersion => "1.1.7";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
-    public NeedSystemBase(IStringLocalizer localizer)
-    {
-        _translator = new Translator(localizer);
-    }
-
-    public CounterStrikeSharp.API.Modules.Timers.Timer? intervalMessages;
+    public required BaseConfigs Config { get; set; }
 
     public override void Load(bool hotReload)
+    {
+        InitializeServices();
+        RegisterEventListeners();
+        RegisterCommands();
+
+        if (hotReload)
+        {
+            _currentMap = Server.MapName;
+        }
+    }
+
+    public void OnConfigParsed(BaseConfigs config)
+    {
+        Config = config;
+        InitializeServices();
+    }
+
+    private void InitializeServices()
+    {
+        _cooldownService = new CooldownService(Config.CommandCooldownSeconds);
+        _playerService = new PlayerService(Config.DontCountAdmins, Config.AdminBypassFlag);
+        _discordService = new DiscordService(Config.WebhookUrl);
+    }
+
+    private void RegisterEventListeners()
     {
         RegisterListener<Listeners.OnMapStart>(mapName =>
         {
             _currentMap = mapName;
         });
 
-        foreach (var command in Config.Command)
-        {
-            AddCommand(command, "", (controller, info) =>
-            {
-                if (controller == null) return;
-
-                int secondsRemaining;
-                if (!CheckCommandCooldown(out secondsRemaining))
-                {
-                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", secondsRemaining]);
-                    return;
-                }
-
-                int numberOfPlayers = GetNumberOfPlayers();
-
-                if (numberOfPlayers >= MinPlayers())
-                {
-                    controller.PrintToChat(_translator["Prefix"] + " " + _translator["EnoughPlayersMessage"]);
-                    return;
-                }
-
-                NeedCommand(controller, controller?.PlayerName ?? _translator["UnknownPlayer"]);
-
-                _lastCommandTime = DateTime.Now;
-
-                if (Config.NotifyAllPlayers)
-                {
-                    Server.PrintToChatAll(_translator["Prefix"] + " " + _translator["NotifyAllPlayersMessage", controller?.PlayerName ?? _translator["UnknownPlayer"], Config.CommandCooldownSeconds]);
-                }
-                else
-                {
-                    controller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
-                }
-
-            });
-        }
-
-        if (hotReload)
-        {
-            _currentMap = Server.MapName;
-        }
-
-        AddCommandListener("say", Listener_Say);
-        AddCommandListener("say_team", Listener_Say);
+        AddCommandListener("say", OnSayCommand);
+        AddCommandListener("say_team", OnSayCommand);
     }
 
-    private HookResult Listener_Say(CCSPlayerController? caller, CommandInfo command)
+    private void RegisterCommands()
+    {
+        foreach (var command in Config.Command)
+        {
+            AddCommand(command, "Request more players on Discord", OnNeedCommand);
+        }
+    }
+
+    private void OnNeedCommand(CCSPlayerController? controller, CommandInfo info)
+    {
+        if (controller == null) return;
+        ExecuteNeedCommand(controller);
+    }
+
+    private HookResult OnSayCommand(CCSPlayerController? caller, CommandInfo command)
     {
         if (caller == null) return HookResult.Continue;
 
@@ -98,289 +91,177 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         return HookResult.Continue;
     }
 
-    private void ExecuteNeedCommand(CCSPlayerController? caller)
+    private void ExecuteNeedCommand(CCSPlayerController controller)
     {
-        if (caller == null) return;
+        if (_cooldownService == null || _playerService == null) return;
 
-        int secondsRemaining;
-        if (!CheckCommandCooldown(out secondsRemaining))
+        if (!_cooldownService.CanExecute(out int secondsRemaining))
         {
-            caller.PrintToChat(_translator["Prefix"] + " " + _translator["CommandCooldownMessage", secondsRemaining]);
+            controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.CommandCooldownMessage, secondsRemaining]}");
             return;
         }
 
-        int numberOfPlayers = GetNumberOfPlayers();
-
-        if (numberOfPlayers >= MinPlayers())
+        int playerCount = _playerService.GetPlayerCount();
+        if (playerCount >= Config.MinPlayers)
         {
-            caller.PrintToChat(_translator["Prefix"] + " " + _translator["EnoughPlayersMessage"]);
+            controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.EnoughPlayersMessage]}");
             return;
         }
 
-        NeedCommand(caller, caller?.PlayerName ?? _translator["UnknownPlayer"]);
+        string playerName = controller.PlayerName ?? Localizer[LocalizationKeys.UnknownPlayer];
+        SendDiscordNotification(playerName);
+        _cooldownService.UpdateLastExecution();
 
-        _lastCommandTime = DateTime.Now;
+        NotifyPlayers(controller, playerName);
+    }
 
+    private void NotifyPlayers(CCSPlayerController controller, string playerName)
+    {
         if (Config.NotifyAllPlayers)
         {
-            Server.PrintToChatAll(_translator["Prefix"] + " " + _translator["NotifyAllPlayersMessage", caller?.PlayerName ?? _translator["UnknownPlayer"], Config.CommandCooldownSeconds]);
+            Server.PrintToChatAll($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.NotifyAllPlayersMessage, playerName, Config.CommandCooldownSeconds]}");
         }
         else
         {
-            caller?.PrintToChat(_translator["Prefix"] + " " + _translator["NotifyPlayersMessage"]);
+            controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.NotifyPlayersMessage]}");
         }
     }
 
-    public required BaseConfigs Config { get; set; }
-
-    public void OnConfigParsed(BaseConfigs config)
+    private void SendDiscordNotification(string playerName)
     {
-        Config = config;
+        if (_discordService == null || _playerService == null) return;
+
+        var embed = BuildDiscordEmbed(playerName);
+        string? mentionMessage = Config.MentionMessage ? Convert.ToString(Localizer[LocalizationKeys.NeedInServerMessage]) : null;
+
+        Task.Run(() => _discordService.SendEmbedAsync(
+            embed.Build(),
+            Config.MentionRoleID,
+            mentionMessage
+        ));
     }
 
-    private bool CheckCommandCooldown(out int secondsRemaining)
+    private DiscordEmbedBuilder BuildDiscordEmbed(string playerName)
     {
-        var secondsSinceLastCommand = (int)(DateTime.Now - _lastCommandTime).TotalSeconds;
-        secondsRemaining = Config.CommandCooldownSeconds - secondsSinceLastCommand;
-        return secondsRemaining <= 0;
-    }
+        string cleanPlayerName = TextHelper.CleanPlayerName(playerName);
+        string serverAddress = ServerHelper.GetServerAddress(Config.GetIPandPORTautomatic, Config.IPandPORT);
+        int maxPlayers = ServerHelper.GetMaxPlayers(Config.GetMaxServerPlayers, Config.MaxServerPlayers, Server.MaxPlayers);
+        string currentTime = DateTime.Now.ToString("HH:mm");
 
-    public int GetNumberOfPlayers()
-    {
-        var players = Utilities.GetPlayers();
-        return players.Where(p => !p.IsBot && !p.IsHLTV && ShouldShowPlayerInList(p)).Count();
-    }
-
-    private bool ShouldShowPlayerInList(CCSPlayerController player)
-    {
-        if (!Config.DontCountAdmins || string.IsNullOrEmpty(Config.AdminBypassFlag))
-            return true;
-
-        try
+        var embedBuilder = new DiscordEmbedBuilder
         {
-            if (!AdminManager.PlayerHasPermissions(player, Config.AdminBypassFlag))
-                return true;
-
-            return player.Team == CsTeam.Terrorist || player.Team == CsTeam.CounterTerrorist;
-        }
-        catch
-        {
-            return true;
-        }
-    }
-
-    private int ConvertHexToColor(string hex)
-    {
-        if (hex.StartsWith("#"))
-        {
-            hex = hex[1..];
-        }
-        return int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
-    }
-
-    public void NeedCommand(CCSPlayerController? caller, string clientName)
-    {
-        if (caller == null) return;
-
-        clientName = clientName.Replace("[Ready]", "").Replace("[Not Ready]", "").Trim();
-
-        string imageUrl = Config.ImagesURL.Replace("{map}", _currentMap);
-        string hour = DateTime.Now.ToString("HH:mm");
-        string playerList = string.Empty;
-
-        if (Config.PlayerNameList)
-        {
-            var players = Utilities.GetPlayers()
-                .Where(p => !p.IsBot && !p.IsHLTV && p.Connected == PlayerConnectedState.PlayerConnected)
-                .Where(ShouldShowPlayerInList)
-                .Select(p => new { p.PlayerName, p.SteamID })
-                .ToList();
-
-            if (players.Any())
-            {
-                var playerDetails = players
-                    .Select(p => $"[{p.PlayerName.Replace("[Ready]", "").Replace("[Not Ready]", "").Trim()}](https://steamcommunity.com/profiles/{p.SteamID})")
-                    .ToList();
-                playerList = string.Join(", ", playerDetails);
-            }
-            else
-            {
-                playerList = _translator["NoPlayersConnectedMessage"];
-            }
-        }
-
-        var fields = new List<object>
-        {
-            new
-            {
-                name = _translator["ServerFieldTitle"],
-                value = $"```{GetIP()}```",
-                inline = true
-            },
-            new
-            {
-                name = _translator["PlayersFieldTitle"],
-                value = $"```{GetNumberOfPlayers()}/{MaxServerPlayers()}```",
-                inline = true
-            },
-            new
-            {
-                name = _translator["Hour"],
-                value = $"```{hour}```",
-                inline = true
-            },
-            new
-            {
-                name = _translator["MapFieldTitle"],
-                value = $"```{_currentMap}```",
-                inline = true
-            },
-            new
-            {
-                name = _translator["RequestFieldTitle"],
-                value = $"```{clientName}```",
-                inline = true
-            },
-
+            Title = Config.UseHostname
+                ? ServerHelper.GetServerHostname(ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedTitle]))
+                : ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedTitle]),
+            Description = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedDescription]),
+            Color = ColorHelper.ConvertHexToColor(Config.EmbedColor)
         };
 
-        if (Config.PlayerNameList)
+        AddBasicFields(embedBuilder, serverAddress, maxPlayers, currentTime, cleanPlayerName);
+        if (Config.PlayerNameList && _playerService != null)
         {
-            fields.Add(new
+            string playerList = _playerService.GetFormattedPlayerList(Localizer[LocalizationKeys.NoPlayersConnectedMessage]);
+            embedBuilder.Fields.Add(new EmbedField
             {
-                name = _translator["PlayerListTitle"],
-                value = playerList,
-                inline = false
+                Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.PlayerListTitle]),
+                Value = playerList,
+                Inline = false
             });
         }
 
-        fields.Add(new
+        AddConnectionField(embedBuilder, serverAddress);
+        ConfigureVisualElements(embedBuilder);
+
+        return embedBuilder;
+    }
+
+    private void AddBasicFields(DiscordEmbedBuilder builder, string serverAddress, int maxPlayers, string time, string playerName)
+    {
+        if (_playerService == null) return;
+
+        builder.Fields.AddRange(
+        [
+            new EmbedField
+            {
+                Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.ServerFieldTitle]),
+                Value = $"```{serverAddress}```",
+                Inline = true
+            },
+            new EmbedField
+            {
+                Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.PlayersFieldTitle]),
+                Value = $"```{_playerService.GetPlayerCount()}/{maxPlayers}```",
+                Inline = true
+            },
+            new EmbedField
+            {
+                Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.Hour]),
+                Value = $"```{time}```",
+                Inline = true
+            },
+            new EmbedField
+            {
+                Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.MapFieldTitle]),
+                Value = $"```{_currentMap}```",
+                Inline = true
+            },
+            new EmbedField
+            {
+                Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.RequestFieldTitle]),
+                Value = $"```{playerName}```",
+                Inline = true
+            }
+        ]);
+    }
+
+    private void AddConnectionField(DiscordEmbedBuilder builder, string serverAddress)
+    {
+        string clickToConnect = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.ClickToConnect]);
+        string connectionUrl = $"{Config.CustomDomain}?ip={serverAddress}";
+
+        builder.Fields.Add(new EmbedField
         {
-            name = _translator["ConnectionFieldTitle"],
-            value = $"[**`connect {GetIP()}`**]({GetCustomDomain()}?ip={GetIP()})  {_translator["ClickToConnect"]}",
-            inline = false
+            Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.ConnectionFieldTitle]),
+            Value = $"[**`connect {serverAddress}`**]({connectionUrl})  {clickToConnect}",
+            Inline = false
         });
-
-        var embed = new
-        {
-            title = Config.UseHostname ? (ConVar.Find("hostname")?.StringValue ?? _translator["EmbedTitle"]) : _translator["EmbedTitle"],
-            description = _translator["EmbedDescription"],
-            color = ConvertHexToColor(Config.EmbedColor),
-            fields,
-            image = Config.EmbedImage ? new
-            {
-                url = imageUrl
-            } : null,
-            footer = Config.EmbedFooter ? new
-            {
-                text = _translator["EmbedFooterText"],
-                icon_url = Config.EmbedFooterImage
-            } : null,
-            author = Config.EmbedAuthor ? new
-            {
-                name = _translator["EmbedAuthorName"],
-                url = Config.EmbedAuthorURL,
-                icon_url = Config.EmbedAuthorImage
-            } : null,
-            thumbnail = Config.EmbedThumbnail ? new
-            {
-                url = Config.EmbedThumbnailImage,
-            } : null
-        };
-
-        Task.Run(() => SendEmbedToDiscord(embed));
     }
 
-    private async Task SendEmbedToDiscord(object embed)
+    private void ConfigureVisualElements(DiscordEmbedBuilder builder)
     {
-        try
+        if (Config.EmbedImage)
         {
-            var webhookUrl = GetWebhook();
-
-            if (string.IsNullOrEmpty(webhookUrl))
+            builder.Image = new EmbedImage
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Webhook URL is null or empty, skipping Discord notification.");
-                return;
-            }
-
-            var httpClient = new HttpClient();
-
-            string content = string.Empty;
-            if (Config.MentionMessage)
-            {
-                string mention = !string.IsNullOrEmpty(MentionRoleID()) ? $"<@&{MentionRoleID()}>" : string.Empty;
-                content = $"{mention} {_translator["NeedInServerMessage"]}";
-            }
-
-            var payload = new
-            {
-                content,
-                embeds = new[] { embed }
+                Url = Config.ImagesURL.Replace("{map}", _currentMap)
             };
-
-            var json = JsonSerializer.Serialize(payload);
-            var contentString = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(webhookUrl, contentString);
-
-            Console.ForegroundColor = response.IsSuccessStatusCode ? ConsoleColor.Green : ConsoleColor.Red;
-            Console.WriteLine(response.IsSuccessStatusCode ? "Success" : $"Error: {response.StatusCode}");
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-    }
 
-    private string GetWebhook()
-    {
-        return Config.WebhookUrl;
-    }
-    private string GetCustomDomain()
-    {
-        return Config.CustomDomain;
-    }
-    private string GetIP()
-    {
-        if (Config.GetIPandPORTautomatic)
+        if (Config.EmbedFooter)
         {
-            string? ip = ConVar.Find("ip")?.StringValue;
-            string? port = ConVar.Find("hostport")?.GetPrimitiveValue<int>().ToString();
-
-            if (!string.IsNullOrEmpty(ip) && !string.IsNullOrEmpty(port))
+            builder.Footer = new EmbedFooter
             {
-                return $"{ip}:{port}";
-            }
-            else
+                Text = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedFooterText]),
+                IconUrl = Config.EmbedFooterImage
+            };
+        }
+
+        if (Config.EmbedAuthor)
+        {
+            builder.Author = new EmbedAuthor
             {
-                return Config.IPandPORT;
-            }
+                Name = ColorHelper.StripColorCodes(Localizer[LocalizationKeys.EmbedAuthorName]),
+                Url = Config.EmbedAuthorURL,
+                IconUrl = Config.EmbedAuthorImage
+            };
         }
-        else
-        {
-            return Config.IPandPORT;
-        }
-    }
-    private string MentionRoleID()
-    {
-        return Config.MentionRoleID;
-    }
 
-    private string MaxServerPlayers()
-    {
-        if (Config.GetMaxServerPlayers)
+        if (Config.EmbedThumbnail)
         {
-            return Server.MaxPlayers.ToString();
+            builder.Thumbnail = new EmbedThumbnail
+            {
+                Url = Config.EmbedThumbnailImage
+            };
         }
-        else
-        {
-            return Config.MaxServerPlayers.ToString();
-        }
-    }
-
-    private int MinPlayers()
-    {
-        return Config.MinPlayers;
     }
 }

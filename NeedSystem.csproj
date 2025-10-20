@@ -4,17 +4,18 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <ItemGroup>
-      <Reference Include="CounterStrikeSharp.API">
-        <HintPath>..\..\..\CounterStrikeSharp.API.dll</HintPath>
-      </Reference>
+      <PackageReference Include="CounterStrikeSharp.API" Version="1.0.342" />
+      <PackageReference Include="MysqlConnector" Version="2.4.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="CounterStrikeSharp.API" Version="*" />
       <None Update="lang\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+      <None Update="MySqlConnector.dll" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>
