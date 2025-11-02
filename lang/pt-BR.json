@@ -1,5 +1,6 @@
 ﻿{
   "Prefix": "[{GOLD}NEED{BLUE}SYSTEM{WHITE}]",
+  "NoPermissionMessage": "Você não tem permissões necessárias para usar este comando.",
   "CommandCooldownMessage": "{GOLD}Você deve esperar {RED}{0} {GOLD}segundos antes de usar este comando novamente.",
   "EnoughPlayersMessage": "Já há jogadores suficientes no servidor.",
   "NotifyPlayersMessage": "{RED}Você notificou outros jogadores que há uma vaga disponível para eles se juntarem.",

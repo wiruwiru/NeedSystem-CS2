@@ -21,6 +21,8 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 | :------- | :------- | :------- |
 | `Command` | You can change the command to be used by the players or add extra commands. | **YES** |
 | `CommandCooldownSeconds` | Command cooldown time in seconds. | **YES** |
+| `ForceCommand` | Command that does not respect `CommandCooldownSeconds` or `MinPlayers`, works the same way as `Command` | **YES** |
+| `ForceCommandFlag` | The admin flag required to use `ForceCommand` commands. | **YES** |
 
 ## Server Settings
 | Parameter | Description | Required |
@@ -103,7 +105,9 @@ This data is stored in the `need_notifications` table and can be used for statis
 {
   "Commands": {
     "Command": ["css_need", ".need"],
-    "CommandCooldownSeconds": 120
+    "CommandCooldownSeconds": 120,
+    "ForceCommand": ["css_forceneed", ".forceneed"],
+    "ForceCommandFlag": "@css/root"
   },
   "ServerSettings": {
     "IPandPORT": "45.235.99.18:27025",

@@ -3,6 +3,7 @@ namespace NeedSystem.Constants;
 public static class LocalizationKeys
 {
     public const string Prefix = "Prefix";
+    public const string NoPermissionMessage = "NoPermissionMessage";
     public const string UnknownPlayer = "UnknownPlayer";
 
     public const string CommandCooldownMessage = "CommandCooldownMessage";

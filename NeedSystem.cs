@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Core.Attributes;
+using CounterStrikeSharp.API.Modules.Admin;
 
 using NeedSystem.Services;
 using NeedSystem.Utils;
@@ -22,7 +23,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private string _currentMap = string.Empty;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.1.7";
+    public override string ModuleVersion => "1.1.8";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 
@@ -100,12 +101,30 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
         {
             AddCommand(command, "Request more players on Discord", OnNeedCommand);
         }
+
+        foreach (var command in Config.Commands.ForceCommand)
+        {
+            AddCommand(command, "Force request more players on Discord (bypasses cooldown and minimum players)", OnForceNeedCommand);
+        }
     }
 
     private void OnNeedCommand(CCSPlayerController? controller, CommandInfo info)
     {
         if (controller == null) return;
-        ExecuteNeedCommand(controller);
+        ExecuteNeedCommand(controller, false);
+    }
+
+    private void OnForceNeedCommand(CCSPlayerController? controller, CommandInfo info)
+    {
+        if (controller == null) return;
+
+        if (!HasForcePermission(controller))
+        {
+            controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.NoPermissionMessage]}");
+            return;
+        }
+
+        ExecuteNeedCommand(controller, true);
     }
 
     private HookResult OnSayCommand(CCSPlayerController? caller, CommandInfo command)
@@ -116,28 +135,49 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 
         if (Config.Commands.Command.Any(cmd => message.Contains(cmd, StringComparison.OrdinalIgnoreCase)))
         {
-            ExecuteNeedCommand(caller);
+            ExecuteNeedCommand(caller, false);
+            return HookResult.Handled;
+        }
+
+        if (Config.Commands.ForceCommand.Any(cmd => message.Contains(cmd, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (HasForcePermission(caller))
+            {
+                ExecuteNeedCommand(caller, true);
+            }
+            else
+            {
+                caller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.NoPermissionMessage]}");
+            }
             return HookResult.Handled;
         }
 
         return HookResult.Continue;
     }
 
-    private void ExecuteNeedCommand(CCSPlayerController controller)
+    private bool HasForcePermission(CCSPlayerController controller)
+    {
+        return AdminManager.PlayerHasPermissions(controller, Config.Commands.ForceCommandFlag);
+    }
+
+    private void ExecuteNeedCommand(CCSPlayerController controller, bool bypassRestrictions)
     {
         if (_cooldownService == null || _playerService == null) return;
 
-        if (!_cooldownService.CanExecute(out int secondsRemaining))
+        if (!bypassRestrictions)
         {
-            controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.CommandCooldownMessage, secondsRemaining]}");
-            return;
-        }
+            if (!_cooldownService.CanExecute(out int secondsRemaining))
+            {
+                controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.CommandCooldownMessage, secondsRemaining]}");
+                return;
+            }
 
-        int playerCount = _playerService.GetPlayerCount();
-        if (playerCount >= Config.Server.MinPlayers)
-        {
-            controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.EnoughPlayersMessage]}");
-            return;
+            int playerCount = _playerService.GetPlayerCount();
+            if (playerCount >= Config.Server.MinPlayers)
+            {
+                controller.PrintToChat($"{Localizer[LocalizationKeys.Prefix]} {Localizer[LocalizationKeys.EnoughPlayersMessage]}");
+                return;
+            }
         }
 
         string playerName = controller.PlayerName ?? Localizer[LocalizationKeys.UnknownPlayer];
