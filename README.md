@@ -5,14 +5,11 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 
 ## Installation
 1. Install [CounterStrike Sharp](https://github.com/roflmuffin/CounterStrikeSharp) and [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master)
-
 2. Download [NeedSystem.zip](https://github.com/wiruwiru/NeedSystem-CS2/releases) from the releases section.
-
-3. Unzip the archive and upload it to the game server
-
-4. Start the server and wait for the config.json file to be generated.
-
-5. Complete the configuration file with the parameters of your choice.
+3. (Optional) If you want to use the database feature, install [AnyBaseLibCS2](https://github.com/NickFox007/AnyBaseLibCS2) dependency.
+4. Unzip the archive and upload it to the game server
+5. Start the server and wait for the config.json file to be generated.
+6. Complete the configuration file with the parameters of your choice.
 
 # Config
 
@@ -77,6 +74,9 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 | `AdminBypassFlag` | The admin flag required to bypass spectator counting (only works if DontCountSpecAdmins is enabled). | **YES** |
 
 ## Database Settings
+> [!NOTE]
+> The database feature requires [AnyBaseLibCS2](https://github.com/NickFox007/AnyBaseLibCS2) to be installed. If not installed, the plugin will work normally but without database functionality.
+
 | Parameter | Description | Required |
 | :------- | :------- | :------- |
 | `Enabled` | Enables or disables the database functionality. When disabled, no database operations will be performed, maintaining optimal performance. | **YES** |
