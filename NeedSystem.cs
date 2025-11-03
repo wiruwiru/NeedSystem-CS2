@@ -12,7 +12,7 @@ using NeedSystem.Configs;
 
 namespace NeedSystem;
 
-[MinimumApiVersion(342)]
+[MinimumApiVersion(345)]
 public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
 {
     private CooldownService? _cooldownService;
@@ -23,7 +23,7 @@ public class NeedSystemBase : BasePlugin, IPluginConfig<BaseConfigs>
     private string _currentMap = string.Empty;
 
     public override string ModuleName => "NeedSystem";
-    public override string ModuleVersion => "1.1.8";
+    public override string ModuleVersion => "1.2.0";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Allows players to send a message to discord requesting players.";
 

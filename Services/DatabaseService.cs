@@ -1,5 +1,8 @@
-using MySqlConnector;
+using AnyBaseLib;
+using AnyBaseLib.Bases;
+
 using NeedSystem.Configs;
+using NeedSystem.Utils;
 using NeedSystem.Models;
 
 namespace NeedSystem.Services;
@@ -8,6 +11,8 @@ public class DatabaseService
 {
     private readonly DatabaseConfig _config;
     private readonly bool _enabled;
+    private IAnyBase? _db;
+    private bool _isInitialized = false;
 
     public DatabaseService(DatabaseConfig config)
     {
@@ -16,37 +21,59 @@ public class DatabaseService
 
         if (_enabled)
         {
-            LogInfo("DatabaseService initialized and enabled");
+            try
+            {
+                _db = CAnyBase.Base("mysql");
+                Logger.LogInfo("DatabaseService", "DatabaseService initialized and enabled");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("DatabaseService", $"Failed to load AnyBaseLib: {ex.Message}");
+                Logger.LogWarning("DatabaseService", "Database functionality will be disabled. Make sure AnyBaseLib.dll is present.");
+                _enabled = false;
+            }
         }
         else
         {
-            LogInfo("DatabaseService initialized but disabled in configuration");
+            Logger.LogInfo("DatabaseService", "DatabaseService initialized but disabled in configuration");
         }
     }
 
     public async Task InitializeDatabase()
     {
-        if (!_enabled)
+        if (!_enabled || _db == null)
         {
-            LogInfo("Database is disabled, skipping initialization");
+            Logger.LogInfo("DatabaseService", "Database is disabled, skipping initialization");
             return;
         }
 
         try
         {
-            using var connection = GetConnection();
-            await connection.OpenAsync();
-            await CreateTable(connection);
-            LogInfo("Database connection established and table created");
+            _db.Set(
+                CommitMode.AutoCommit,
+                _config.DatabaseName,
+                $"{_config.Host}:{_config.Port}",
+                _config.User,
+                _config.Password
+            );
+
+            if (!_db.Init())
+            {
+                throw new Exception("Failed to initialize database connection");
+            }
+
+            await Task.Run(CreateTable);
+            _isInitialized = true;
+            Logger.LogInfo("DatabaseService", "Database connection established and table created");
         }
         catch (Exception ex)
         {
-            LogError($"Failed to initialize database: {ex.Message}");
+            Logger.LogError("DatabaseService", $"Failed to initialize database: {ex.Message}");
             throw;
         }
     }
 
-    private async Task CreateTable(MySqlConnection connection)
+    private void CreateTable()
     {
         var createTableQuery = @"
             CREATE TABLE IF NOT EXISTS need_notifications (
@@ -61,177 +88,159 @@ public class DatabaseService
                 INDEX idx_server (server_address)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 
-        using var cmd = new MySqlCommand(createTableQuery, connection);
-        await cmd.ExecuteNonQueryAsync();
-        LogInfo("Notifications table created/verified");
+        _db?.Query(createTableQuery, new List<string>(), true);
+        Logger.LogInfo("DatabaseService", "Notifications table created/verified");
     }
 
     public async Task<bool> SaveNotification(NotificationRecord record)
     {
-        if (!_enabled)
+        if (!_enabled || _db == null || !_isInitialized)
         {
             return false;
         }
 
         try
         {
-            using var connection = GetConnection();
-            await connection.OpenAsync();
-
             var insertQuery = @"
                 INSERT INTO need_notifications 
                 (uuid, server_address, connected_players, max_players, map_name, timestamp, requested_by)
                 VALUES 
-                (@uuid, @server_address, @connected_players, @max_players, @map_name, @timestamp, @requested_by)";
+                ('{ARG}', '{ARG}', {ARG}, {ARG}, '{ARG}', '{ARG}', '{ARG}')";
 
-            using var cmd = new MySqlCommand(insertQuery, connection);
-            cmd.Parameters.AddWithValue("@uuid", record.Uuid);
-            cmd.Parameters.AddWithValue("@server_address", record.ServerAddress);
-            cmd.Parameters.AddWithValue("@connected_players", record.ConnectedPlayers);
-            cmd.Parameters.AddWithValue("@max_players", record.MaxPlayers);
-            cmd.Parameters.AddWithValue("@map_name", record.MapName);
-            cmd.Parameters.AddWithValue("@timestamp", record.Timestamp);
-            cmd.Parameters.AddWithValue("@requested_by", record.RequestedBy);
+            var args = new List<string>
+            {
+                record.Uuid,
+                record.ServerAddress,
+                record.ConnectedPlayers.ToString(),
+                record.MaxPlayers.ToString(),
+                record.MapName,
+                record.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"),
+                record.RequestedBy
+            };
 
-            await cmd.ExecuteNonQueryAsync();
-            LogInfo($"Notification saved to database - UUID: {record.Uuid}");
+            await Task.Run(() => _db.Query(insertQuery, args, true));
+
+            Logger.LogInfo("DatabaseService", $"Notification saved to database - UUID: {record.Uuid}");
             return true;
         }
         catch (Exception ex)
         {
-            LogError($"Error saving notification to database: {ex.Message}");
+            Logger.LogError("DatabaseService", $"Error saving notification to database: {ex.Message}");
             return false;
         }
     }
 
     public async Task<List<NotificationRecord>> GetRecentNotifications(int limit = 10)
     {
-        if (!_enabled)
+        if (!_enabled || _db == null || !_isInitialized)
         {
             return new List<NotificationRecord>();
         }
 
         try
         {
-            using var connection = GetConnection();
-            await connection.OpenAsync();
-
             var selectQuery = @"
                 SELECT uuid, server_address, connected_players, max_players, map_name, timestamp, requested_by
                 FROM need_notifications
                 ORDER BY timestamp DESC
-                LIMIT @limit";
+                LIMIT {ARG}";
 
-            using var cmd = new MySqlCommand(selectQuery, connection);
-            cmd.Parameters.AddWithValue("@limit", limit);
+            var args = new List<string> { limit.ToString() };
 
             var records = new List<NotificationRecord>();
-            using var reader = await cmd.ExecuteReaderAsync();
-
-            while (await reader.ReadAsync())
+            await Task.Run(() =>
             {
-                records.Add(new NotificationRecord
+                var rows = _db.Query(selectQuery, args);
+                if (rows != null && rows.Count > 0)
                 {
-                    Uuid = reader.GetString("uuid"),
-                    ServerAddress = reader.GetString("server_address"),
-                    ConnectedPlayers = reader.GetInt32("connected_players"),
-                    MaxPlayers = reader.GetInt32("max_players"),
-                    MapName = reader.GetString("map_name"),
-                    Timestamp = reader.GetDateTime("timestamp"),
-                    RequestedBy = reader.GetString("requested_by")
-                });
-            }
+                    foreach (var row in rows)
+                    {
+                        records.Add(new NotificationRecord
+                        {
+                            Uuid = row[0],
+                            ServerAddress = row[1],
+                            ConnectedPlayers = int.Parse(row[2]),
+                            MaxPlayers = int.Parse(row[3]),
+                            MapName = row[4],
+                            Timestamp = DateTime.Parse(row[5]),
+                            RequestedBy = row[6]
+                        });
+                    }
+                }
+            });
 
             return records;
         }
         catch (Exception ex)
         {
-            LogError($"Error retrieving notifications from database: {ex.Message}");
+            Logger.LogError("DatabaseService", $"Error retrieving notifications from database: {ex.Message}");
             return new List<NotificationRecord>();
         }
     }
 
     public async Task<int> GetNotificationCount()
     {
-        if (!_enabled)
+        if (!_enabled || _db == null || !_isInitialized)
         {
             return 0;
         }
 
         try
         {
-            using var connection = GetConnection();
-            await connection.OpenAsync();
-
             var countQuery = "SELECT COUNT(*) FROM need_notifications";
-            using var cmd = new MySqlCommand(countQuery, connection);
 
-            var result = await cmd.ExecuteScalarAsync();
-            return Convert.ToInt32(result);
+            int count = 0;
+            await Task.Run(() =>
+            {
+                var result = _db.Query(countQuery, new List<string>());
+                if (result != null && result.Count > 0 && result[0].Count > 0)
+                {
+                    count = int.Parse(result[0][0]);
+                }
+            });
+
+            return count;
         }
         catch (Exception ex)
         {
-            LogError($"Error getting notification count: {ex.Message}");
+            Logger.LogError("DatabaseService", $"Error getting notification count: {ex.Message}");
             return 0;
         }
     }
 
     public async Task<bool> TestConnection()
     {
-        if (!_enabled)
+        if (!_enabled || _db == null)
         {
-            LogInfo("Database is disabled, skipping connection test");
+            Logger.LogInfo("DatabaseService", "Database is disabled, skipping connection test");
             return false;
         }
 
         try
         {
-            using var connection = GetConnection();
-            await connection.OpenAsync();
-            LogInfo("Database connection test successful");
+            await Task.Run(() => _db.Query("SELECT 1", new List<string>()));
+            Logger.LogInfo("DatabaseService", "Database connection test successful");
             return true;
         }
         catch (Exception ex)
         {
-            LogError($"Database connection test failed: {ex.Message}");
+            Logger.LogError("DatabaseService", $"Database connection test failed: {ex.Message}");
             return false;
         }
     }
 
-    private MySqlConnection GetConnection()
+    public bool IsEnabled() => _enabled && _db != null && _isInitialized;
+
+    public void Dispose()
     {
-        if (_config == null)
+        try
         {
-            throw new InvalidOperationException("Database configuration is null");
+            _db?.Close();
+            Logger.LogInfo("DatabaseService", "Database connection closed");
         }
-
-        var builder = new MySqlConnectionStringBuilder
+        catch (Exception ex)
         {
-            Server = _config.Host,
-            Port = _config.Port,
-            UserID = _config.User,
-            Database = _config.DatabaseName,
-            Password = _config.Password,
-            Pooling = true,
-            SslMode = MySqlSslMode.Preferred
-        };
-
-        return new MySqlConnection(builder.ConnectionString);
+            Logger.LogError("DatabaseService", $"Error closing database connection: {ex.Message}");
+        }
     }
-
-    private void LogInfo(string message)
-    {
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine($"[NeedSystem Database] {message}");
-        Console.ResetColor();
-    }
-
-    private void LogError(string message)
-    {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"[NeedSystem Database] {message}");
-        Console.ResetColor();
-    }
-
-    public bool IsEnabled() => _enabled;
 }
