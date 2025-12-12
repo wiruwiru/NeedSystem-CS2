@@ -5,7 +5,7 @@ namespace NeedSystem.Configs;
 public class DiscordSettings
 {
     [JsonPropertyName("WebhookUrl")]
-    public string WebhookUrl { get; set; } = "";
+    public List<string> WebhookUrl { get; set; } = new() { "https://discord.com/api/webhooks/xxxxx/xxxxxxxxx" };
 
     [JsonPropertyName("MentionRoleID")]
     public string MentionRoleID { get; set; } = "";

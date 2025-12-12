@@ -8,44 +8,54 @@ namespace NeedSystem.Services;
 
 public class DiscordService
 {
-    private readonly string _webhookUrl;
+    private readonly List<string> _webhookUrls;
     private readonly HttpClient _httpClient;
 
-    public DiscordService(string webhookUrl)
+    public DiscordService(List<string> webhookUrls)
     {
-        _webhookUrl = webhookUrl;
+        _webhookUrls = webhookUrls ?? new List<string>();
         _httpClient = new HttpClient();
     }
 
     public async Task SendEmbedAsync(object embed, string? mentionRoleId = null, string? mentionMessage = null)
     {
-        try
+        if (_webhookUrls == null || _webhookUrls.Count == 0)
         {
-            if (string.IsNullOrEmpty(_webhookUrl))
+            LogWarning("No webhook URLs configured, skipping Discord notification.");
+            return;
+        }
+
+        string content = BuildMentionContent(mentionRoleId, mentionMessage);
+
+        var payload = new
+        {
+            content,
+            embeds = new[] { embed }
+        };
+
+        var json = JsonSerializer.Serialize(payload);
+        var contentString = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var tasks = _webhookUrls.Select(async webhookUrl =>
+        {
+            try
             {
-                LogWarning("Webhook URL is null or empty, skipping Discord notification.");
-                return;
+                if (string.IsNullOrEmpty(webhookUrl))
+                {
+                    LogWarning($"Webhook URL is null or empty, skipping.");
+                    return;
+                }
+
+                var response = await _httpClient.PostAsync(webhookUrl, contentString);
+                LogResponse(response.IsSuccessStatusCode, response.StatusCode.ToString(), webhookUrl);
             }
-
-            string content = BuildMentionContent(mentionRoleId, mentionMessage);
-
-            var payload = new
+            catch (Exception e)
             {
-                content,
-                embeds = new[] { embed }
-            };
+                LogError($"Error sending Discord embed to {webhookUrl}", e);
+            }
+        });
 
-            var json = JsonSerializer.Serialize(payload);
-            var contentString = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(_webhookUrl, contentString);
-
-            LogResponse(response.IsSuccessStatusCode, response.StatusCode.ToString());
-        }
-        catch (Exception e)
-        {
-            LogError("Error sending Discord embed", e);
-            throw;
-        }
+        await Task.WhenAll(tasks);
     }
 
     private string BuildMentionContent(string? mentionRoleId, string? mentionMessage)
@@ -67,12 +77,13 @@ public class DiscordService
         Console.ResetColor();
     }
 
-    private void LogResponse(bool success, string statusCode)
+    private void LogResponse(bool success, string statusCode, string? webhookUrl = null)
     {
         Console.ForegroundColor = success ? ConsoleColor.Green : ConsoleColor.Red;
+        string urlInfo = !string.IsNullOrEmpty(webhookUrl) ? $" to {webhookUrl}" : "";
         Console.WriteLine(success
-            ? "[NeedSystem] Discord notification sent successfully"
-            : $"[NeedSystem] Error sending Discord notification: {statusCode}");
+            ? $"[NeedSystem] Discord notification sent successfully{urlInfo}"
+            : $"[NeedSystem] Error sending Discord notification{urlInfo}: {statusCode}");
         Console.ResetColor();
     }
 

@@ -38,7 +38,7 @@ https://github.com/user-attachments/assets/fca8fed1-c07c-4546-9972-dc1cd49ab769
 ## Discord Settings
 | Parameter | Description | Required |
 | :------- | :------- | :------- |
-| `WebhookUrl` | You must create it in the channel where you will send the notices. | **YES** |
+| `WebhookUrl` | List of webhook URLs where notifications will be sent. You can add multiple URLs to send the same message to different channels. The same message will be sent to all configured webhooks simultaneously. You must create them in the channels where you will send the notices. | **YES** |
 | `MentionRoleID` | You must have the discord developer mode activated, right click on the role and copy its ID. | **NO** |
 | `MentionMessage` | You can use this option to deactivate the mention message completely, with this deactivated only the embed will be sent. | **YES** |
 | `PlayerNameList` | Displays a list of the names and profiles of the users who are logged in at the time the command is sent. | **YES** |
@@ -119,7 +119,10 @@ This data is stored in the `need_notifications` table and can be used for statis
     "MinPlayers": 10
   },
   "DiscordSettings": {
-    "WebhookUrl": "https://discord.com/api/webhooks/xxxxx/xxxxxxxxx",
+    "WebhookUrl": [
+      "https://discord.com/api/webhooks/xxxxx/xxxxxxxxx",
+      "https://discord.com/api/webhooks/yyyyy/yyyyyyyyy"
+    ],
     "MentionRoleID": "1111767358881681519",
     "MentionMessage": true,
     "PlayerNameList": true,
