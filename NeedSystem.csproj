@@ -1,21 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <OutputPath>bin\Release\NeedSystem\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CounterStrikeSharp.API" Version="1.0.369" />
+    <PackageReference Include="MysqlConnector" Version="2.5.0" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="CounterStrikeSharp.API" Version="1.0.348" />
-      <PackageReference Include="MysqlConnector" Version="2.4.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="lang\**\*.*" CopyToOutputDirectory="PreserveNewest" />
-      <None Update="MySqlConnector.dll" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
+  <ItemGroup>
+    <None Update="lang\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="MySqlConnector.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

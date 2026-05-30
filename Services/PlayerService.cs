@@ -27,7 +27,7 @@ public class PlayerService
     public List<(string Name, ulong SteamId)> GetConnectedPlayers()
     {
         return Utilities.GetPlayers()
-            .Where(p => !p.IsBot && !p.IsHLTV && p.Connected == PlayerConnectedState.PlayerConnected)
+            .Where(p => !p.IsBot && !p.IsHLTV && p.Connected == PlayerConnectedState.Connected)
             .Where(ShouldCountPlayer)
             .Select(p => (p.PlayerName, p.SteamID))
             .ToList();
